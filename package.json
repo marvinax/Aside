@@ -1,0 +1,17 @@
+{
+  "name": "learnWebpack",
+  "version": "1.0.0",
+  "description": "You are supposed to have installed webpack",
+  "main": "bundle.js",
+  "scripts": {
+    "test": "open index.html",
+    "make": "npm install & webpack",
+    "clean" : "rm -rf node_modules"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "css-loader": "^0.14.4",
+    "style-loader": "^0.12.3"
+  }
+}
