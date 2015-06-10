@@ -6,6 +6,8 @@ var $ = require('jquery');
 
 var position = {latitude : 0, longitude: 0};
 
+var startTime = Date.now();
+
 var repeatedlyGetLocation = function(){
 	navigator.geolocation.getCurrentPosition(function(pos){
 		console.log("Location obtained.")
@@ -45,7 +47,8 @@ var Entry = React.createClass({
 			liked : this.state.liked,
 			lati : position.latitude,
 			longi : position.longitude,
-			time : Date.now()
+			time : Date.now(),
+			howLongStayed : Date.now() - startTime
 		}, function(){
 			this.props.notifyParent(this.props.imageIndex, this.state.liked);
 		}.bind(this));
