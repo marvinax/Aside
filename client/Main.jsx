@@ -1,5 +1,4 @@
 'use strict'
-var Model = require("./Model.js")
 var React = require('react/addons');
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 var Waypoint = require('react-waypoint');
