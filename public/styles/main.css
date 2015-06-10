@@ -1,0 +1,35 @@
+.liked-box {
+	text-align: center;
+
+	font-family:Seravek; 'Hiragino Sans GB';
+	letter-spacing: -0.05em;
+	font-size: 5em;
+	font-weight:Bold;
+
+
+	background: #999;
+	color: #fff;
+	
+	padding: 10px;
+	position: absolute;
+	display : inline-block;
+	opacity : 0.8;
+}
+
+.liked-enter {
+	opacity: 0.0;
+	transition: opacity .15s ease;
+}
+
+.liked-enter.liked-enter-active {
+	opacity : 0.8;
+}
+
+.liked-leave {
+	opacity: 0.8;
+	transition: opacity .15s ease;
+}
+
+.liked-leave.liked-leave-active {
+	opacity : 0.0;
+}

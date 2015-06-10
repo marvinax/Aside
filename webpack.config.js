@@ -1,13 +1,16 @@
+var path = require('path')
+
 module.exports = {
-    entry: "./entry.js",
+    entry: "./client/Main.jsx",
     output: {
-        path: __dirname,
-        filename: "bundle.js"
+        path: path.join(__dirname, 'public/scripts/'),
+        filename: "bundle.js",
+        minimize: "true"
     },
     module: {
         loaders: [
-            { test: /\.css$/, loader: "style!css" }
+            { test: /\.css$/, loader: "style!css" },
+            { test: /\.jsx?$/, loader: "jsx?harmony&insertPragma=React.DOM"}
         ]
     }
 };
-

@@ -1,17 +1,27 @@
 {
-  "name": "learnWebpack",
-  "version": "1.0.0",
-  "description": "You are supposed to have installed webpack",
-  "main": "bundle.js",
+  "name": "Aside",
+  "version": "0.0.0",
+  "private": true,
   "scripts": {
-    "test": "open index.html",
-    "make": "npm install & webpack",
-    "clean" : "rm -rf node_modules"
+    "start": "node --harmony app.js",
+    "test": "mocha --harmony"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "css-loader": "^0.14.4",
-    "style-loader": "^0.12.3"
+    "co-body": "^0.0.1",
+    "co-views": "^0.2.0",
+    "jquery": "^2.1.4",
+    "koa": "^0.6.0",
+    "koa-compress": "^1.0.6",
+    "koa-logger": "^1.2.0",
+    "koa-route": "^1.1.4",
+    "koa-static": "^1.4.5",
+    "react-infinite-scroll": "^0.1.5",
+    "react-waypoint": "^1.0.1",
+    "swig": "^1.3.2"
+  },
+  "devDependencies": {
+    "jsx-loader": "^0.13.2",
+    "mocha": "^1.18.2",
+    "supertest": "^0.12.1"
   }
 }
