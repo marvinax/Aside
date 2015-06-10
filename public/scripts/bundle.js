@@ -108,7 +108,7 @@
 
 			var likeBox = this.state.liked ? (React.createElement("div", {className: "liked-box"}, " Liked! ")) : "";
 
-			var imageName = "http://localhost:3000/images/" + this.props.imageIndex + ".jpg";
+			var imageName = "./images/" + this.props.imageIndex + ".jpg";
 
 			return (React.createElement("div", {style: style, onClick: this.handleClick}, 
 				React.createElement(ReactCSSTransitionGroup, {transitionName: "liked"}, 

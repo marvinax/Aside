@@ -62,7 +62,7 @@ var Entry = React.createClass({
 
 		var likeBox = this.state.liked ? (<div className="liked-box"> Liked! </div>) : "";
 
-		var imageName = "http://localhost:3000/images/" + this.props.imageIndex + ".jpg";
+		var imageName = "./images/" + this.props.imageIndex + ".jpg";
 
 		return (<div style={style} onClick={this.handleClick}>
 			<ReactCSSTransitionGroup transitionName="liked">
