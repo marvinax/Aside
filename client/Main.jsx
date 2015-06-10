@@ -67,7 +67,7 @@ var Entry = React.createClass({
 			<ReactCSSTransitionGroup transitionName="liked">
 				{likeBox}
 			</ReactCSSTransitionGroup>
-			<img src={imageName} style={{width : "120%"}}/>
+			<img src={imageName}/>
 		</div>);
 	}
 })
