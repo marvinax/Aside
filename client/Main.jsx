@@ -5,9 +5,26 @@ var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 var Waypoint = require('react-waypoint');
 var $ = require('jquery');
 
-var model = new Model();
+var position = {latitude : 0, longitude: 0};
 
+var repeatedlyGetLocation = function(){
+	navigator.geolocation.getCurrentPosition(function(pos){
+		console.log("Location obtained.")
+		position = pos.coords;
+	}, function(err){
+		console.log("failed to obtain location, retry in 5 secs");
+		window.setTimeout(repeatedGetLocation, 5000);
+	}, {
+		enableHighAccuracy: true,
+		timeout: 6000,
+		maximumAge: 0
+	});
 
+}
+
+var getRandomIndex = function(n){
+	return (Math.random()*(n-1)+1 | 0);
+}
 // 1. Entry should implement the UI interaction, like after tapping to "like"
 // 		a. First, how can we know that the likes are from same person?
 // 			 store the tapping record in session storage
@@ -17,49 +34,22 @@ var model = new Model();
 // 5. The parent class updates all elements containing same content.
 
 var Entry = React.createClass({
-
 	getInitialState: function () {
 	    return {
-	        liked : model.exist(this.props.imageIndex)
+	        liked : false  
 	    };
-	},	
+	},
 
 	handleClick: function() {
-		var that = this;
-		var data = {};
-		
-		navigator.geolocation.getCurrentPosition(function(position){
-
-			var submit = {
-				index : that.props.imageIndex,
-				liked : model.exist(that.props.imageIndex),
-				time : Date.now(),
-				lati : position.coords.latitude,
-				longi : position.coords.longitude
-			}
-
-			$.getJSON("/like", submit, function(){
-				// model.toggle(that.props.imageIndex, {liked: true});
-				that.setState({liked: !that.state.liked});
-			});
-
-		}, function(err){
-
-			var submit = {
-				index : that.props.imageIndex,
-				liked : model.exist(that.props.imageIndex),
-				time : Date.now()
-			}
-
-			$.getJSON("/like", submit, function(){
-				// model.toggle(that.props.imageIndex, {liked: true});
-				that.setState({liked: !that.state.liked});
-			});
-
-		}, {enableHighAccuracy: true,
-			timeout: 500,
-			maximumAge: 0
-		});
+		$.getJSON("/like", {
+			index : this.props.imageIndex,
+			liked : this.state.liked,
+			lati : position.latitude,
+			longi : position.longitude,
+			time : Date.now()
+		}, function(){
+			this.props.notifyParent(this.props.imageIndex, this.state.liked);
+		}.bind(this));
 	},
 
 	render: function() {
@@ -83,21 +73,25 @@ var Entry = React.createClass({
 	}
 })
 
-var InfiniteScrollExample = React.createClass({
-	handleClick: function(){
-		console.log("yay");
+var ScrollView = React.createClass({
+
+	handleNotifyParent: function(selectedIndex, liked){
+		this.state.items.forEach(function(index, key){
+			if(selectedIndex === index)
+				this.refs["entry"+key].setState({liked : !liked});
+		}.bind(this));
 	},
 
 	_loadMoreItems: function() {
 		var itemsToAdd = 3;
-		var secondsToWait = 0.5;
+		var secondsToWait = 0.2;
 		this.setState({ isLoading: true });
 		// fake an async. ajax call with setTimeout
 		window.setTimeout(function() {
 			// add data
 			var currentItems = this.state.items;
 			for (var i = 0; i < itemsToAdd; i++) {
-				currentItems.push(model.getRandomIndex(50));
+				currentItems.push(getRandomIndex(50));
 			}
 			this.setState({
 				items: currentItems,
@@ -121,41 +115,17 @@ var InfiniteScrollExample = React.createClass({
 	 * @return {Object}
 	 */
 	_renderItems: function() {
+		var that = this;
 		return this.state.items.map(function(imageIndex, index) {
 			return (
-				<Entry imageIndex={imageIndex}/>
+				<Entry
+					imageIndex={imageIndex}
+					ref={"entry"+index}
+					key={index}
+					notifyParent={that.handleNotifyParent}
+				/>
 			);
 		});
-	},
-
-	/**
-	 * @return {Object}
-	 */
-	_renderLoadingMessage: function() {
-		if (this.state.isLoading) {
-
-			var style = {
-				left: "50%",
-				top: "50%",
-				transform: "translate(-50%, -50%)",
-				background: "#999",
-				color: "#fff",
-				opacity: "0.5",
-				padding: "10px",
-				pointerEvents: "none",
-				position: "absolute",
-				zIndex: "1000",
-				fontSize : "80px",
-				fontFamily : "Seravek, Hiragino Sans GB",
-				fontWeight : "Bold"
-			}
-
-			return (
-				<p style={style}>
-					No, please, I wanna eat more...
-				</p>
-			);
-		}
 	},
 
 	_renderWaypoint: function() {
@@ -174,20 +144,18 @@ var InfiniteScrollExample = React.createClass({
 	 */
 	render: function() {
 		return (
-			<div className="infinite-scroll-example">
-				{this._renderLoadingMessage()}
-				<div className="infinite-scroll-example__scrollable-parent">
-					{this._renderItems()}
-					{this._renderWaypoint()}
-				</div>
+			<div ref="entryHolder">
+				Tap image to like!
+				{this._renderItems()}
+				{this._renderWaypoint()}
 			</div>
 		);
 	}
 });
 
 function render(){
-
-	React.render(<InfiniteScrollExample/>, document.getElementById('content'));
+	repeatedlyGetLocation();
+	React.render(<ScrollView/>, document.getElementById('content'));
 }
 
 render();

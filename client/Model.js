@@ -18,10 +18,6 @@ Model.prototype.notify = function(){
 	});
 }
 
-// Data operations
-Model.prototype.getRandomIndex = function(n){
-	return (Math.random()*(n-1)+1 | 0);
-}
 
 Model.prototype.add = function(key, value){
 	this.data[key] = value;
