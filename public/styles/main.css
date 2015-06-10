@@ -1,3 +1,9 @@
+@font-face {
+    font-family: Seravek;
+    font-weight: bold;
+    src: url(../fonts/Seravek-Bold.ttf);
+}
+
 body{
 	text-align: center;
 	font-family:Seravek; 'Hiragino Sans GB';

@@ -114,7 +114,7 @@
 				React.createElement(ReactCSSTransitionGroup, {transitionName: "liked"}, 
 					likeBox
 				), 
-				React.createElement("img", {src: imageName})
+				React.createElement("img", {src: imageName, style: {width : "120%"}})
 			));
 		}
 	})
