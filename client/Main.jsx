@@ -1,78 +1,33 @@
 'use strict'
 var React = require('react/addons');
+var Entry = require('./Entry.jsx');
+
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 var Waypoint = require('react-waypoint');
-var $ = require('jquery');
-
-var position = {latitude : 0, longitude: 0};
-
-var startTime = Date.now();
-
-var repeatedlyGetLocation = function(){
-}
-
-var getRandomIndex = function(n){
-	return (Math.random()*(n-1)+1 | 0);
-}
-
-var Entry = React.createClass({
-	getInitialState: function () {
-	    return {
-	        liked : false  
-	    };
-	},
-
-	handleClick: function() {
-		$.getJSON("/like", {
-			index : this.props.imageIndex,
-			liked : this.state.liked,
-			lati : this.props.position.latitude,
-			longi : this.props.position.longitude,
-			time : Date.now(),
-			howLongStayed : Date.now() - startTime
-		}, function(){
-			this.props.notifyParent(this.props.imageIndex, this.state.liked);
-		}.bind(this));
-	},
-
-	render: function() {
-
-		var style = { 
-			padding : "20px 20px",
-			margin : "50px 50px",
-			textAlign: "center"
-		};
-
-		var likeBox = this.state.liked ? (<div className="liked-box"> Liked! </div>) : "";
-
-		var imageName = "./images/" + this.props.imageIndex + ".jpg";
-
-		return (<div style={style} onClick={this.handleClick}>
-			<ReactCSSTransitionGroup transitionName="liked">
-				{likeBox}
-			</ReactCSSTransitionGroup>
-			<img src={imageName}/>
-		</div>);
-	}
-})
 
 var EntryHolder = React.createClass({
 
-	componentDidMount: function () {
+	_getRandomIndex : function(n){
+		return (Math.random()*(n-1)+1 | 0);
+	},
 
+	componentWillMount: function () {
+		this._repeatedlyGetLocation();
+	},
+
+	_repeatedlyGetLocation : function() {
 		navigator.geolocation.getCurrentPosition(function(pos){
 			console.log("Location obtained.")
-			this.setState({position: pos.coord});
+			this.setState({position : pos.coords});
 		}.bind(this), function(err){
 			console.log("failed to obtain location, retry in 1 sec until finally get the data");
 			this.setState({position : {latitude : 0, longitude : 0}});
-			window.setTimeout(repeatedGetLocation, 1000);
+			window.setTimeout(this._repeatedlyGetLocation, 1000);
 		}.bind(this), {
 			enableHighAccuracy: true,
 			timeout: 6000,
 			maximumAge: 0
 		});
-
 	},
 
 	handleNotifyParent: function(selectedIndex, liked){
@@ -91,7 +46,7 @@ var EntryHolder = React.createClass({
 			// add data
 			var currentItems = this.state.items;
 			for (var i = 0; i < itemsToAdd; i++) {
-				currentItems.push(getRandomIndex(50));
+				currentItems.push(this._getRandomIndex(50));
 			}
 			this.setState({
 				items: currentItems,
@@ -107,6 +62,7 @@ var EntryHolder = React.createClass({
 		var initialItems = [1, 2, 5];
 		return {
 			items: initialItems,
+			startingTime : Date.now(),
 			isLoading: false,
 			position : {latitude : 0, longitude: 0}
 		};
@@ -121,6 +77,7 @@ var EntryHolder = React.createClass({
 			return (
 				<Entry
 					position={this.state.position}
+					startingTime={this.state.startingTime}
 					imageIndex={imageIndex}
 					ref={"entry"+index}
 					key={index}
@@ -145,6 +102,7 @@ var EntryHolder = React.createClass({
 	 * @return {Object}
 	 */
 	render: function() {
+
 		return (
 			<div ref="entryHolder">
 				Tap image to like!
@@ -156,7 +114,6 @@ var EntryHolder = React.createClass({
 });
 
 function render(){
-	repeatedlyGetLocation();
 	React.render(<EntryHolder/>, document.getElementById('content'));
 }
 

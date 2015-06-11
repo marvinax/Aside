@@ -46,79 +46,34 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
+	var Entry = __webpack_require__(177);
+
 	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 	var Waypoint = __webpack_require__(174);
-	var $ = __webpack_require__(176);
-
-	var position = {latitude : 0, longitude: 0};
-
-	var startTime = Date.now();
-
-	var repeatedlyGetLocation = function(){
-	}
-
-	var getRandomIndex = function(n){
-		return (Math.random()*(n-1)+1 | 0);
-	}
-
-	var Entry = React.createClass({displayName: "Entry",
-		getInitialState: function () {
-		    return {
-		        liked : false  
-		    };
-		},
-
-		handleClick: function() {
-			$.getJSON("/like", {
-				index : this.props.imageIndex,
-				liked : this.state.liked,
-				lati : this.props.position.latitude,
-				longi : this.props.position.longitude,
-				time : Date.now(),
-				howLongStayed : Date.now() - startTime
-			}, function(){
-				this.props.notifyParent(this.props.imageIndex, this.state.liked);
-			}.bind(this));
-		},
-
-		render: function() {
-
-			var style = { 
-				padding : "20px 20px",
-				margin : "50px 50px",
-				textAlign: "center"
-			};
-
-			var likeBox = this.state.liked ? (React.createElement("div", {className: "liked-box"}, " Liked! ")) : "";
-
-			var imageName = "./images/" + this.props.imageIndex + ".jpg";
-
-			return (React.createElement("div", {style: style, onClick: this.handleClick}, 
-				React.createElement(ReactCSSTransitionGroup, {transitionName: "liked"}, 
-					likeBox
-				), 
-				React.createElement("img", {src: imageName})
-			));
-		}
-	})
 
 	var EntryHolder = React.createClass({displayName: "EntryHolder",
 
-		componentDidMount: function () {
+		_getRandomIndex : function(n){
+			return (Math.random()*(n-1)+1 | 0);
+		},
 
+		componentWillMount: function () {
+			this._repeatedlyGetLocation();
+		},
+
+		_repeatedlyGetLocation : function() {
 			navigator.geolocation.getCurrentPosition(function(pos){
 				console.log("Location obtained.")
-				this.setState({position: pos.coord});
+				this.setState({position : pos.coords});
 			}.bind(this), function(err){
 				console.log("failed to obtain location, retry in 1 sec until finally get the data");
 				this.setState({position : {latitude : 0, longitude : 0}});
-				window.setTimeout(repeatedGetLocation, 1000);
+				window.setTimeout(this._repeatedlyGetLocation, 1000);
 			}.bind(this), {
 				enableHighAccuracy: true,
 				timeout: 6000,
 				maximumAge: 0
 			});
-
 		},
 
 		handleNotifyParent: function(selectedIndex, liked){
@@ -137,7 +92,7 @@
 				// add data
 				var currentItems = this.state.items;
 				for (var i = 0; i < itemsToAdd; i++) {
-					currentItems.push(getRandomIndex(50));
+					currentItems.push(this._getRandomIndex(50));
 				}
 				this.setState({
 					items: currentItems,
@@ -153,6 +108,7 @@
 			var initialItems = [1, 2, 5];
 			return {
 				items: initialItems,
+				startingTime : Date.now(),
 				isLoading: false,
 				position : {latitude : 0, longitude: 0}
 			};
@@ -167,6 +123,7 @@
 				return (
 					React.createElement(Entry, {
 						position: this.state.position, 
+						startingTime: this.state.startingTime, 
 						imageIndex: imageIndex, 
 						ref: "entry"+index, 
 						key: index, 
@@ -191,6 +148,7 @@
 		 * @return {Object}
 		 */
 		render: function() {
+
 			return (
 				React.createElement("div", {ref: "entryHolder"}, 
 					"Tap image to like!", 
@@ -202,7 +160,6 @@
 	});
 
 	function render(){
-		repeatedlyGetLocation();
 		React.render(React.createElement(EntryHolder, null), document.getElementById('content'));
 	}
 
@@ -32081,6 +32038,60 @@
 
 	}));
 
+
+/***/ },
+/* 177 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict'
+	var React = __webpack_require__(1);
+	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+	var $ = __webpack_require__(176);
+
+	var Entry = React.createClass({displayName: "Entry",
+		getInitialState: function () {
+		    return {
+		        liked : false  
+		    };
+		},
+
+		handleClick: function() {
+			console.log(this.props);
+
+			$.getJSON("/like", {
+				index : this.props.imageIndex,
+				liked : this.state.liked,
+				lati : this.props.position.latitude,
+				longi : this.props.position.longitude,
+				time : Date.now(),
+				howLongStayed : Date.now() - this.props.startingTime
+			}, function(){
+				this.props.notifyParent(this.props.imageIndex, this.state.liked);
+			}.bind(this));
+		},
+
+		render: function() {
+
+			var style = { 
+				padding : "20px 20px",
+				margin : "50px 50px",
+				textAlign: "center"
+			};
+
+			var likeBox = this.state.liked ? (React.createElement("div", {className: "liked-box"}, " Liked! ")) : "";
+
+			var imageName = "./images/" + this.props.imageIndex + ".jpg";
+
+			return (React.createElement("div", {style: style, onClick: this.handleClick}, 
+				React.createElement(ReactCSSTransitionGroup, {transitionName: "liked"}, 
+					likeBox
+				), 
+				React.createElement("img", {src: imageName})
+			));
+		}
+	});
+
+	module.exports = Entry;
 
 /***/ }
 /******/ ]);

@@ -1,10 +1,7 @@
 'use strict'
 var React = require('react/addons');
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-
-var getRandomIndex = function(n){
-	return (Math.random()*(n-1)+1 | 0);
-}
+var $ = require('jquery');
 
 var Entry = React.createClass({
 	getInitialState: function () {
@@ -14,13 +11,15 @@ var Entry = React.createClass({
 	},
 
 	handleClick: function() {
+		console.log(this.props);
+
 		$.getJSON("/like", {
 			index : this.props.imageIndex,
 			liked : this.state.liked,
 			lati : this.props.position.latitude,
 			longi : this.props.position.longitude,
 			time : Date.now(),
-			howLongStayed : Date.now() - startTime
+			howLongStayed : Date.now() - this.props.startingTime
 		}, function(){
 			this.props.notifyParent(this.props.imageIndex, this.state.liked);
 		}.bind(this));
@@ -45,4 +44,6 @@ var Entry = React.createClass({
 			<img src={imageName}/>
 		</div>);
 	}
-})
+});
+
+module.exports = Entry;

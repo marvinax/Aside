@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="styles/stats.css">
+</head>
+<body>
+<ul>
+	{% for item in data %}
+		<li>
+			<b>Liked image</b>: {{item.like.index}}<br/>
+			<b>Location</b>: {{item.like.lati}} {{item.like.longi}}<br/>
+			{{item.user.type}}
+		</li>
+	{% endfor %}
+</ul>
+</body>
+</html>

@@ -24,7 +24,11 @@ app.use(route.get('/', function *(){
     this.body = yield render('index');
 }));
 
-
+app.use(route.get('/stats', function *(){
+	var res = docs.find({});
+	console.log(res);
+	this.body = yield render('stats', {data : res});
+}));
 
 app.use(route.get('/like', function *(){
 	docs.insert({
@@ -37,6 +41,11 @@ app.use(route.get('/like', function *(){
 	if(docs.data.length % 15 == 0){
 		db.save();
 	}
+
+	console.log(docs.where(function(item){
+		return item.like.index === this.request.query.index;
+	}.bind(this)));
+
 	this.body = {ok: "received"};
 }))
 
