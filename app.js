@@ -15,13 +15,16 @@ var loki = require('lokijs');
 app.use(logger());
 app.use(compress());
 // DB
-var db = new loki('./data.json', {autosave: true, autosaveInterval: 10000}),
+var db = new loki('./data.json',
+	{autosave: true, autoload:true, autosaveInterval: 10000}),
 	docs = db.addCollection('docs');
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 app.use(route.get('/', function *(){
     this.body = yield render('index');
 }));
+
+
 
 app.use(route.get('/like', function *(){
 	docs.insert({
