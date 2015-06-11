@@ -9,30 +9,11 @@ var position = {latitude : 0, longitude: 0};
 var startTime = Date.now();
 
 var repeatedlyGetLocation = function(){
-	navigator.geolocation.getCurrentPosition(function(pos){
-		console.log("Location obtained.")
-		position = pos.coords;
-	}, function(err){
-		console.log("failed to obtain location, retry in 5 secs");
-		window.setTimeout(repeatedGetLocation, 5000);
-	}, {
-		enableHighAccuracy: true,
-		timeout: 6000,
-		maximumAge: 0
-	});
-
 }
 
 var getRandomIndex = function(n){
 	return (Math.random()*(n-1)+1 | 0);
 }
-// 1. Entry should implement the UI interaction, like after tapping to "like"
-// 		a. First, how can we know that the likes are from same person?
-// 			 store the tapping record in session storage
-// 2. The geolocation info and timestamp will be submit to server [Done]
-// 3. the server returns the result of modification, including how many people liked it
-// 4. The Entry receives the updated number of like, and inform the parent class
-// 5. The parent class updates all elements containing same content.
 
 var Entry = React.createClass({
 	getInitialState: function () {
@@ -45,8 +26,8 @@ var Entry = React.createClass({
 		$.getJSON("/like", {
 			index : this.props.imageIndex,
 			liked : this.state.liked,
-			lati : position.latitude,
-			longi : position.longitude,
+			lati : this.props.position.latitude,
+			longi : this.props.position.longitude,
 			time : Date.now(),
 			howLongStayed : Date.now() - startTime
 		}, function(){
@@ -75,7 +56,24 @@ var Entry = React.createClass({
 	}
 })
 
-var ScrollView = React.createClass({
+var EntryHolder = React.createClass({
+
+	componentDidMount: function () {
+
+		navigator.geolocation.getCurrentPosition(function(pos){
+			console.log("Location obtained.")
+			this.setState({position: pos.coord});
+		}.bind(this), function(err){
+			console.log("failed to obtain location, retry in 1 sec until finally get the data");
+			this.setState({position : {latitude : 0, longitude : 0}});
+			window.setTimeout(repeatedGetLocation, 1000);
+		}.bind(this), {
+			enableHighAccuracy: true,
+			timeout: 6000,
+			maximumAge: 0
+		});
+
+	},
 
 	handleNotifyParent: function(selectedIndex, liked){
 		this.state.items.forEach(function(index, key){
@@ -110,6 +108,7 @@ var ScrollView = React.createClass({
 		return {
 			items: initialItems,
 			isLoading: false,
+			position : {latitude : 0, longitude: 0}
 		};
 	},
 
@@ -121,13 +120,14 @@ var ScrollView = React.createClass({
 		return this.state.items.map(function(imageIndex, index) {
 			return (
 				<Entry
+					position={this.state.position}
 					imageIndex={imageIndex}
 					ref={"entry"+index}
 					key={index}
 					notifyParent={that.handleNotifyParent}
 				/>
 			);
-		});
+		}.bind(this));
 	},
 
 	_renderWaypoint: function() {
@@ -157,7 +157,7 @@ var ScrollView = React.createClass({
 
 function render(){
 	repeatedlyGetLocation();
-	React.render(<ScrollView/>, document.getElementById('content'));
+	React.render(<EntryHolder/>, document.getElementById('content'));
 }
 
 render();
