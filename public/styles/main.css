@@ -6,19 +6,61 @@
 
 body{
 	text-align: center;
-	font-family:Seravek; 'Hiragino Sans GB';
+
+}
+
+.title{
+	text-align: center;
+	font-family:Seravek, "Hiragino Sans GB", sans-serif;
 	letter-spacing: -0.05em;
 	font-size: 7em;
-	font-weight:Bold;
+}
+
+.descript-box {
+	text-align: center;
+
+	background: #999;
+	color: #fff;
+
+	font-family:"Hiragino Sans GB", sans-serif;
+	font-size : 180%;
+
+	transform : translate(0, 516px);
+	display: inline-block;
+	vertical-align:top;
+	width : 600px;
+	position: absolute;
+	opacity : 0.6;
+}
+
+.descript-enter {
+	opacity: 0.1;
+	transition: opacity .15s ease;
+}
+
+.descript-enter.descript-enter-active {
+	opacity : 0.6;
+}
+
+.descript-leave {
+	opacity: 0.6;
+	transition: opacity .15s ease;
+}
+
+.descript-leave.descript-leave-active {
+	opacity : 0.1;
 }
 
 .liked-box {
 	text-align: center;
 
-	font-size: 80%;
+	font-family: Seravek, sans-serif;
+	font-weight:Bold;
+	font-size: 6em;
+	letter-spacing: -0.04em;
 	background: #999;
 	color: #fff;
-	
+
 	padding: 10px;
 	position: absolute;
 	display : inline-block;

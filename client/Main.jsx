@@ -1,8 +1,9 @@
 'use strict'
 var React = require('react/addons');
 var Entry = require('./Entry.jsx');
+var $ = require('jquery');
+var _ = require('lodash');
 
-var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 var Waypoint = require('react-waypoint');
 
 var EntryHolder = React.createClass({
@@ -16,24 +17,45 @@ var EntryHolder = React.createClass({
 	},
 
 	_repeatedlyGetLocation : function() {
+		var that = this;
+
 		navigator.geolocation.getCurrentPosition(function(pos){
-			console.log("Location obtained.")
-			this.setState({position : pos.coords});
-		}.bind(this), function(err){
-			console.log("failed to obtain location, retry in 1 sec until finally get the data");
-			this.setState({position : {latitude : 0, longitude : 0}});
-			window.setTimeout(this._repeatedlyGetLocation, 1000);
-		}.bind(this), {
+			console.log("location coords obtained.")
+
+			AMap.service(["AMap.Geocoder"], function() {	   
+				var geocoder = new AMap.Geocoder({
+					radius: 1000,
+					extensions: "all"
+				});
+				//逆地理编码
+				geocoder.getAddress(new AMap.LngLat(pos.coords.longitude, pos.coords.latitude), function(status, result){
+					if(status === 'complete' && result.info === 'OK'){
+						console.log(result);
+						var res = result.regeocode.addressComponent;
+						var city = (res.city.length == 0) ? res.province : res.city;
+						that.setState({position : pos.coords, city : city});
+					} else {
+						console.log(status);
+						that.setState({position : pos.coords, city : "上海市"});
+					}
+				});
+			});
+
+
+		}, function(err){
+			console.log("failed to obtain location coords, retry in 1 sec until finally get the data");
+			window.setTimeout(that._repeatedlyGetLocation, 1000);
+		}, {
 			enableHighAccuracy: true,
-			timeout: 6000,
+			timeout: 2000,
 			maximumAge: 0
 		});
 	},
 
-	handleNotifyParent: function(selectedIndex, liked){
+	handleNotifyParent: function(selectedIndex, liked, message){
 		this.state.items.forEach(function(index, key){
 			if(selectedIndex === index)
-				this.refs["entry"+key].setState({liked : !liked});
+				this.refs["entry"+key].setState({liked : !liked, message: message});
 		}.bind(this));
 	},
 
@@ -64,7 +86,8 @@ var EntryHolder = React.createClass({
 			items: initialItems,
 			startingTime : Date.now(),
 			isLoading: false,
-			position : {latitude : 0, longitude: 0}
+			position : {latitude : 0, longitude: 0},
+			city : "天水镇"
 		};
 	},
 
@@ -77,6 +100,7 @@ var EntryHolder = React.createClass({
 			return (
 				<Entry
 					position={this.state.position}
+					city={this.state.city}
 					startingTime={this.state.startingTime}
 					imageIndex={imageIndex}
 					ref={"entry"+index}
@@ -105,7 +129,7 @@ var EntryHolder = React.createClass({
 
 		return (
 			<div ref="entryHolder">
-				Tap image to like!
+				<div className="title">Tap image to like!</div>
 				{this._renderItems()}
 				{this._renderWaypoint()}
 			</div>

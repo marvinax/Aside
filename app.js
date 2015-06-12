@@ -11,6 +11,7 @@ var views = require('co-views');
 var app = module.exports = koa();
 var loki = require('lokijs');
 
+var $ = require('jquery');
 
 app.use(logger());
 app.use(compress());
@@ -31,6 +32,9 @@ app.use(route.get('/stats', function *(){
 }));
 
 app.use(route.get('/like', function *(){
+
+	console.log($.getJSON);
+
 	docs.insert({
 		like: this.request.query,
 		user: {
@@ -42,11 +46,11 @@ app.use(route.get('/like', function *(){
 		db.save();
 	}
 
-	console.log(docs.where(function(item){
-		return item.like.index === this.request.query.index;
-	}.bind(this)));
-
-	this.body = {ok: "received"};
+	this.body = {
+		ok: docs.where(function(item){
+			return item.like.index === this.request.query.index;
+		}.bind(this))
+	};
 }))
 
 
