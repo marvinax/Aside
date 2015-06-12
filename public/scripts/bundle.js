@@ -22722,7 +22722,15 @@
 
 			if(this.state.liked){
 				var cities = _.uniq(this.state.message.map(function(item){return item.like.city})).slice(0, 3).join('，');
-				var number = this.state.message.length;
+				var number = 1;
+
+				this.state.message.forEach(function(item){
+					if (item.like.liked == "false")
+						number +=1;
+					else
+						number -=1;
+				})
+
 				var desc = "包括您在内的来自 "+cities+" 等地的"+number+"位吃货表示喜欢这道吃的";
 				var descBox = (React.createElement("div", {className: "descript-box"}, " ", desc, " "));
 			} else {

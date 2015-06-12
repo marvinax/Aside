@@ -26,6 +26,7 @@ body{
 	font-size : 180%;
 
 	transform : translate(0, 516px);
+	-webkit-transform : translate(0, 516px);
 	display: inline-block;
 	vertical-align:top;
 	width : 600px;
