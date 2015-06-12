@@ -129,7 +129,7 @@ var EntryHolder = React.createClass({
 
 		return (
 			<div ref="entryHolder">
-				<div className="title">Tap image to like!</div>
+				<div className="title">点击图片点个赞吧～</div>
 				{this._renderItems()}
 				{this._renderWaypoint()}
 			</div>

@@ -17,19 +17,15 @@ body{
 }
 
 .descript-box {
-	text-align: center;
 
 	background: #999;
 	color: #fff;
 
 	font-family:"Hiragino Sans GB", sans-serif;
-	font-size : 180%;
-
-	transform : translate(0, 516px);
-	-webkit-transform : translate(0, 516px);
-	display: inline-block;
-	vertical-align:top;
-	width : 600px;
+	font-size : 200%;
+	
+	margin-right : 88px;
+	padding: 30px 10px;
 	position: absolute;
 	opacity : 0.6;
 }

@@ -28,12 +28,10 @@ var Entry = React.createClass({
 	render: function() {
 
 		var style = { 
-			padding : "20px 20px",
+			padding : "30px 30px",
 			margin : "50px 50px",
 			textAlign: "center"
 		};
-
-		var likeBox = this.state.liked ? (<div className="liked-box"> Liked! </div>) : "";
 
 		if(this.state.liked){
 			var cities = _.uniq(this.state.message.map(function(item){return item.like.city})).slice(0, 3).join('，');
@@ -55,15 +53,12 @@ var Entry = React.createClass({
 		var imageName = "./images/" + this.props.imageIndex + ".jpg";
 
 		return (<div style={style} onClick={this.handleClick}>
-			<ReactCSSTransitionGroup transitionName="liked">
-				{likeBox}
-			</ReactCSSTransitionGroup>
 
 			<ReactCSSTransitionGroup transitionName="descript">
 				{descBox}
 			</ReactCSSTransitionGroup>
 
-			<img src={imageName}/>
+			<img width="100%" src={imageName}/>
 		</div>);
 	}
 });
