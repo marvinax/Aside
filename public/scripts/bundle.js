@@ -46,41 +46,9 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React              = __webpack_require__(1);
-	var CSSTransitionGroup = React.addons.CSSTransitionGroup;
-	var Router             = __webpack_require__(174);
-	var Locations 		   = Router.Locations;
-	var Location           = Router.Location;
-	var Link               = Router.Link;
-
+	var AnimatedLocations  = __webpack_require__(206);
 	var EntryHolder        = __webpack_require__(201);
 	var New                = __webpack_require__(205);
-
-
-	var AnimatedLocations = React.createClass({displayName: "AnimatedLocations",
-		mixins: [
-			Router.AsyncRouteRenderingMixin,
-			Router.RouterMixin,
-			React.addons.PureRenderMixin
-		],
-
-		getDefaultProps: function() {
-			return {
-				component: 'div'
-			}
-		},
-
-		getRoutes: function(props) {
-			return props.children;
-		},
-
-		render: function() {
-			// A key MUST be set in order for transitionGroup to work.
-			var handler = this.renderRouteHandler({key: this.state.match.path});
-			// TransitionGroup takes in a `component` property, and so does AnimatedLocations, so we pass through
-			return (React.createElement(CSSTransitionGroup, React.__spread({},  this.props), handler));
-		}
-	});
-
 
 	var App = React.createClass({displayName: "App",
 	  render: function() {
@@ -24512,7 +24480,7 @@
 
 					React.createElement("div", {className: "button"}, 
 						React.createElement(Link, {href: "/new", transisionName: "moveUp"}, 
-							React.createElement("img", {src: "./icons/add.svg"})
+							React.createElement("img", {width: "50%", src: "./icons/add.svg"})
 						)
 					)
 				)
@@ -24553,12 +24521,6 @@
 
 		render: function() {
 
-			var style = { 
-				padding : "30px 30px",
-				margin : "50px 50px",
-				textAlign: "center"
-			};
-
 			var descBox = (this.state.liked) ? (React.createElement("div", {className: "descript-box"}, " Liked! ")) : "";
 
 			var imageName = "./images/" + this.props.imageIndex + ".jpg";
@@ -24570,7 +24532,7 @@
 						descBox
 					), 
 
-					React.createElement("img", {width: "100%", style: {padding : "10px 0"}, src: imageName})
+					React.createElement("img", {className: "user-image", src: imageName})
 				)
 			);
 		}
@@ -33963,17 +33925,108 @@
 	var React = __webpack_require__(1);
 	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
+
+	var FileForm = React.createClass({displayName: "FileForm",
+
+		getInitialState: function() {
+			return {
+				data_uri: null,
+			};
+		},
+
+		handleClick : function(){
+			this.refs.fileInput.getDOMNode().click();
+		},
+
+		handleSubmit: function(e) {
+			e.preventDefault();
+		},
+
+		handleFile: function(e) {
+			var self = this;
+			var reader = new FileReader();
+			var file = e.target.files[0];
+
+			reader.onload = function(upload) {
+				self.setState({
+					data_uri: upload.target.result,
+				});
+			}
+
+			reader.readAsDataURL(file);
+		},
+
+		render: function() {
+			return (
+				React.createElement("form", {style: {display: "none"}, onSubmit: this.handleSubmit, encType: "multipart/form-data"}, 
+				React.createElement("input", {ref: "fileInput", type: "file", onChange: this.handleFile})
+				)
+			);
+		},
+	});
+
 	var New = React.createClass({displayName: "New",
+
+		handleClick : function(){
+			this.refs.actualFileUploader.handleClick();
+		},
+
 		render : function(){
 			return (
+				React.createElement("div", {className: "caption-container"}, 
 				React.createElement("div", null, 
-					React.createElement("textarea", null)
+				React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", placeholder: "Place your caption here"})
+				), 
+
+				React.createElement("div", {id: "file-upload", className: "file-upload", onClick: this.handleClick}, 
+					"Tap to upload image, supposed to be replaced with fonticon", 
+					React.createElement(FileForm, {ref: "actualFileUploader"})
+				)
 				)
 			);
 		}
 	})
 
 	module.exports = New;
+
+/***/ },
+/* 206 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */"use strict"
+	var React              = __webpack_require__(1);
+	var CSSTransitionGroup = React.addons.CSSTransitionGroup;
+	var Router             = __webpack_require__(174);
+	var Locations 		   = Router.Locations;
+	var Location           = Router.Location;
+	var Link               = Router.Link;
+
+	var AnimatedLocations = React.createClass({displayName: "AnimatedLocations",
+		mixins: [
+			Router.AsyncRouteRenderingMixin,
+			Router.RouterMixin,
+			React.addons.PureRenderMixin
+		],
+
+		getDefaultProps: function() {
+			return {
+				component: 'div'
+			}
+		},
+
+		getRoutes: function(props) {
+			return props.children;
+		},
+
+		render: function() {
+			// A key MUST be set in order for transitionGroup to work.
+			var handler = this.renderRouteHandler({key: this.state.match.path});
+			// TransitionGroup takes in a `component` property, and so does AnimatedLocations, so we pass through
+			return (React.createElement(CSSTransitionGroup, React.__spread({},  this.props), handler));
+		}
+	});
+
+	module.exports = AnimatedLocations;
 
 /***/ }
 /******/ ]);

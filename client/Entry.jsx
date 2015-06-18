@@ -25,12 +25,6 @@ var Entry = React.createClass({
 
 	render: function() {
 
-		var style = { 
-			padding : "30px 30px",
-			margin : "50px 50px",
-			textAlign: "center"
-		};
-
 		var descBox = (this.state.liked) ? (<div className="descript-box"> Liked! </div>) : "";
 
 		var imageName = "./images/" + this.props.imageIndex + ".jpg";
@@ -42,7 +36,7 @@ var Entry = React.createClass({
 					{descBox}
 				</ReactCSSTransitionGroup>
 
-				<img width="100%" style={{padding : "10px 0"}} src={imageName}/>
+				<img className="user-image" src={imageName}/>
 			</div>
 		);
 	}

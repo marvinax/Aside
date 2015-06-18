@@ -5,8 +5,41 @@
 }
 
 body{
+	color : #2F2933;
 	text-align: center;
 	margin : 0;
+}
+
+.user-image {
+	width: 100%;
+}
+
+.caption-container {
+	text-align: center;
+	margin-top : 3em;
+}
+
+.caption {
+	background-color: #D46A6A;
+    padding : 0.7em;
+    border-radius : 0.5em;
+    margin : 0.2em;
+    width : 75%;
+    border : none;
+    outline : none;
+    resize : none;
+    font-size : 1em;
+    font-weight : lighter;
+    font-family: Seravek;
+}
+
+.file-upload{
+	display : inline-block;
+    border-radius : 0.5em;
+	border : dashed;
+    margin-top: 2em;
+	width : 80%;
+	height : 200px;
 }
 
 .title{
@@ -160,7 +193,7 @@ body{
 
 .button {
 	background-color: rgba(255, 255, 255, 0.85);
-	padding: 0.5em 0.25em;
+	padding: 0.3em 0;
 
 	border-radius: 2em;
 

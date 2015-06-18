@@ -88,7 +88,7 @@ var EntryHolder = React.createClass({
 
 				<div className="button">
 					<Link href="/new" transisionName="moveUp">
-						<img src="./icons/add.svg" />
+						<img width="50%" src="./icons/add.svg" />
 					</Link>
 				</div>
 			</div>
