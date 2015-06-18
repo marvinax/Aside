@@ -55,7 +55,8 @@ var New = React.createClass({
 			</div>
 
 			<div id="file-upload" className="file-upload" onClick={this.handleClick}>
-				Tap to upload image, supposed to be replaced with fonticon				<FileForm ref="actualFileUploader"/>
+				Tap to upload image, supposed to be replaced with fonticon
+				<FileForm ref="actualFileUploader"/>
 			</div>
 			</div>
 		);
