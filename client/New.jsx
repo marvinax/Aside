@@ -2,7 +2,6 @@
 var React = require('react/addons');
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
-
 var FileForm = React.createClass({
 
 	getInitialState: function() {
@@ -36,10 +35,10 @@ var FileForm = React.createClass({
 	render: function() {
 		return (
 			<form style={{display: "none"}} onSubmit={this.handleSubmit} encType="multipart/form-data">
-			<input ref="fileInput" type="file" onChange={this.handleFile} />
+				<input ref="fileInput" type="file" onChange={this.handleFile} />
 			</form>
 		);
-	},
+	}
 });
 
 var New = React.createClass({
@@ -56,8 +55,7 @@ var New = React.createClass({
 			</div>
 
 			<div id="file-upload" className="file-upload" onClick={this.handleClick}>
-				Tap to upload image, supposed to be replaced with fonticon
-				<FileForm ref="actualFileUploader" />
+				Tap to upload image, supposed to be replaced with fonticon				<FileForm ref="actualFileUploader"/>
 			</div>
 			</div>
 		);
