@@ -11,19 +11,14 @@ var views = require('co-views');
 var app = module.exports = koa();
 var loki = require('lokijs');
 
-var $ = require('jquery');
-
 app.use(logger());
 app.use(compress());
 // DB
 var db = new loki('./data.json',
-	{autosave: true, autoload:true, autosaveInterval: 10000}),
+	{autosave: true, autosaveInterval: 10000}),
 	docs = db.addCollection('docs');
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
-app.use(route.get('/', function *(){
-    this.body = yield render('index');
-}));
 
 app.use(route.get('/stats', function *(){
 	var res = docs.find({});
@@ -32,8 +27,6 @@ app.use(route.get('/stats', function *(){
 }));
 
 app.use(route.get('/like', function *(){
-
-	console.log($.getJSON);
 
 	docs.insert({
 		like: this.request.query,
@@ -52,6 +45,11 @@ app.use(route.get('/like', function *(){
 		}.bind(this))
 	};
 }))
+
+app.use(route.get('/', function *(){
+    this.body = yield render('index');
+}));
+
 
 
 app.use(serve(path.join(__dirname, 'public/')));
