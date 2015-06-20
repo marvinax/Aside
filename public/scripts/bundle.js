@@ -33964,63 +33964,25 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
+	var SingleFileUpload = __webpack_require__(207)
 	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-
-	var FileForm = React.createClass({displayName: "FileForm",
-
-		getInitialState: function() {
-			return {
-				data_uri: null,
-			};
-		},
-
-		handleClick : function(){
-			this.refs.fileInput.getDOMNode().click();
-		},
-
-		handleSubmit: function(e) {
-			e.preventDefault();
-		},
-
-		handleFile: function(e) {
-			var self = this;
-			var reader = new FileReader();
-			var file = e.target.files[0];
-
-			reader.onload = function(upload) {
-				self.setState({
-					data_uri: upload.target.result,
-				});
-			}
-
-			reader.readAsDataURL(file);
-		},
-
-		render: function() {
-			return (
-				React.createElement("form", {style: {display: "none"}, onSubmit: this.handleSubmit, encType: "multipart/form-data"}, 
-					React.createElement("input", {ref: "fileInput", type: "file", onChange: this.handleFile})
-				)
-			);
-		}
-	});
 
 	var New = React.createClass({displayName: "New",
 
 		handleClick : function(){
-			this.refs.actualFileUploader.handleClick();
+			this.refs.fileUpload.invokeFileInput();
 		},
 
 		render : function(){
 			return (
 				React.createElement("div", {className: "caption-container"}, 
 				React.createElement("div", null, 
-				React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", placeholder: "Place your caption here"})
+					React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", placeholder: "Place your caption here"})
 				), 
 
 				React.createElement("div", {id: "file-upload", className: "file-upload", onClick: this.handleClick}, 
 					"Tap to upload image, supposed to be replaced with fonticon", 
-					React.createElement(FileForm, {ref: "actualFileUploader"})
+					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"})
 				)
 				)
 			);
@@ -34028,6 +33990,77 @@
 	})
 
 	module.exports = New;
+
+/***/ },
+/* 207 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict'
+	var React = __webpack_require__(1);
+
+	// A React.js Component that demonstrates how to integrate
+	// with Ajax behavior. For single file uploading, you could
+	// get rid of importing jQuery. You can also write your own
+	// component that exhcange JSON information by mimicking this
+	// piece of code.
+
+	var SingleFileUPload = React.createClass({displayName: "SingleFileUPload",
+
+		// the default props contain the XHR object which handles 
+		// everything about transmission. The FormData wraps the
+		// File object loaded by FileUpload object.
+
+		xhr : new XMLHttpRequest(),
+
+		form : new FormData(),
+
+		getInitialState: function () {
+		    return {
+		        file : {},
+		        status : ""
+		    };
+		},
+
+		invokeFileInput : function() {
+			this.refs.fileInput.getDOMNode().click();
+		},
+
+		selectFile : function(e) {
+			e.preventDefault();
+			this.setState({
+				file: this.refs.fileInput.getDOMNode().files[0],
+				status : "selected"
+			})
+		},
+
+		success : function(){
+			console.log("apparently we received something");
+		},
+
+		componentDidMount: function () {
+		    this.xhr.onLoad = this.success;
+		},
+
+		componentDidUpdate: function (prevProps, prevState) {
+		    if(this.state.status == "selected") {
+		    	this.xhr.open("POST" );
+		    }
+		},
+
+		render : function() {
+			return ( React.createElement("input", {
+					ref: "fileInput", 
+					style: {display: "none"}, 
+
+					type: "file", 
+					accept: "image/*", 
+					capture: "camera", 
+					onChange: this.selectFile}
+			))
+		}
+	})
+
+	module.exports = SingleFileUPload;
 
 /***/ }
 /******/ ]);
