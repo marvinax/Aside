@@ -5,10 +5,6 @@ var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 
 var New = React.createClass({
 
-	handleClick : function(){
-		this.refs.fileUpload.invokeFileInput();
-	},
-
 	render : function(){
 		return (
 			<div className="caption-container">
@@ -16,10 +12,9 @@ var New = React.createClass({
 				<textarea ref="caption" maxLength="60" className="caption" placeholder="Place your caption here"/>
 			</div>
 
-			<div id="file-upload" className="file-upload" onClick={this.handleClick}>
-				Tap to upload image, supposed to be replaced with fonticon
-				<SingleFileUpload ref="fileUpload" remoteHandler="/upload" />
-			</div>
+				<SingleFileUpload ref="fileUpload" remoteHandler="/upload" >
+					Tap to upload files
+				</SingleFileUpload>
 			</div>
 		);
 	}

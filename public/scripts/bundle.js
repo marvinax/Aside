@@ -33969,10 +33969,6 @@
 
 	var New = React.createClass({displayName: "New",
 
-		handleClick : function(){
-			this.refs.fileUpload.invokeFileInput();
-		},
-
 		render : function(){
 			return (
 				React.createElement("div", {className: "caption-container"}, 
@@ -33980,10 +33976,9 @@
 					React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", placeholder: "Place your caption here"})
 				), 
 
-				React.createElement("div", {id: "file-upload", className: "file-upload", onClick: this.handleClick}, 
-					"Tap to upload image, supposed to be replaced with fonticon", 
-					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"})
-				)
+					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"}, 
+						"Tap to upload files"
+					)
 				)
 			);
 		}
@@ -33998,69 +33993,463 @@
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
 
+	var ImageCrop = __webpack_require__(208);
+
+	// # React.js AJAX Single File upload input
+
 	// A React.js Component that demonstrates how to integrate
 	// with Ajax behavior. For single file uploading, you could
 	// get rid of importing jQuery. You can also write your own
 	// component that exhcange JSON information by mimicking this
 	// piece of code.
 
+	// The current implementation is a single file input, which
+	// is set to hidden and invoked from outside. And also you need
+	// to specify the callback which runs after uploaded.
+
+	// Marvin Yue Tao
+	// June 20, 2015
+
 	var SingleFileUPload = React.createClass({displayName: "SingleFileUPload",
 
 		// the default props contain the XHR object which handles 
 		// everything about transmission. The FormData wraps the
 		// File object loaded by FileUpload object.
-
 		xhr : new XMLHttpRequest(),
 
 		form : new FormData(),
 
 		getInitialState: function () {
-		    return {
-		        file : {},
-		        status : ""
-		    };
+			return {
+				file : {},
+				scale: 1,
+				status : ""
+			};
 		},
 
 		invokeFileInput : function() {
 			this.refs.fileInput.getDOMNode().click();
 		},
 
-		selectFile : function(e) {
-			e.preventDefault();
+		loadImage : function(e) {
+			var self = this;
+			var reader = new FileReader();
+			var file = e.target.files[0];
+
+			reader.onload = function(upload) {
+				self.setState({
+					file : file,
+					file_data_uri: upload.target.result,
+					status : "loaded"
+				});
+			}
+
+			reader.readAsDataURL(file);
+		},
+
+		handleUpload : function(e){
 			this.setState({
-				file: this.refs.fileInput.getDOMNode().files[0],
-				status : "selected"
+				cropped_file_data_uri : this.refs.crop.getImage(),
+				status : "ready"
 			})
 		},
 
 		success : function(){
-			console.log("apparently we received something");
+			if(this.xhr.status === 200)
+				console.log("apparently we received something");
+			else
+				console.log(this.xhr.status);
 		},
 
 		componentDidMount: function () {
-		    this.xhr.onLoad = this.success;
+			this.xhr.onload = function(){
+				// The server is expected to reply a string ID. Change whatever
+				// you like, but remember xhr.response is a string, you need to
+				// parse it into object if your server returns an object.
+				this.setState({status : "uploaded", fileId : this.xhr.response});
+			}.bind(this);
 		},
 
 		componentDidUpdate: function (prevProps, prevState) {
-		    if(this.state.status == "selected") {
-		    	this.xhr.open("POST" );
-		    }
+			switch (this.state.status){
+				case "loaded" :
+					break;
+				case "ready" : 
+					this.form.append("file", this.state.cropped_file_data_uri, this.state.file.name);
+
+					this.xhr.open("POST", this.props.remoteHandler);
+					this.xhr.send(this.form);
+					break;
+				case "uploaded" : 
+					// this.props.uploadedHandler(this.state.fileId);
+					break;
+			}
+				
 		},
 
 		render : function() {
-			return ( React.createElement("input", {
-					ref: "fileInput", 
-					style: {display: "none"}, 
 
-					type: "file", 
-					accept: "image/*", 
-					capture: "camera", 
-					onChange: this.selectFile}
-			))
+			var content;
+			if (this.state.status === "")
+
+				content = (React.createElement("div", {id: "file-upload", 
+								className: "file-upload", 
+								onClick: this.invokeFileInput}, 
+					this.props.children, 
+					React.createElement("input", {
+						ref: "fileInput", 
+						style: {display: "none"}, 
+
+						type: "file", 
+						accept: "image/*", 
+						capture: "camera", 
+						onChange: this.loadImage}
+					)
+				));
+
+			else if (this.state.status === "loaded"){
+				content = (React.createElement("div", null, 
+					React.createElement(ImageCrop, {ref: "crop", image: this.state.file_data_uri}), 
+					React.createElement("br", null), 
+					React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Upload!")
+				))
+			} else if (this.state.status === "uploaded"){
+				content = (React.createElement("div", null, 
+					React.createElement("img", {src: this.state.cropped_file_data_uri, width: "200px"})
+				))
+			}
+
+			return content;
 		}
 	})
 
 	module.exports = SingleFileUPload;
+
+/***/ },
+/* 208 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */"use strict"
+	var React = __webpack_require__(177);
+
+	var deviceEvents = {
+	    down: 'onTouchStart',
+	    move: 'onTouchMove',
+	    up: 'onTouchUp'
+	};
+
+	var ImageCrop = React.createClass({displayName: "ImageCrop",
+
+	    getDefaultProps:function() {
+	        return {
+	            border: 25,
+	            width: 200,
+	            height: 200,
+	            color: [0, 0, 0, 0.5],
+	            onImageReady:function() {},
+	        }
+	    },
+
+	    getInitialState:function() {
+	        return {
+	            drag: false,
+	            pinch: false,
+	            mouseY: null,
+	            mouseX: null,
+	            scale: 1,
+	            image: {
+	                x: 0,
+	                y: 0
+	            },
+	            canvas: {
+	                width: this.props.width + (this.props.border * 2),
+	                height: this.props.height + (this.props.border * 2)
+	            }
+	        };
+	    },
+
+	    getImage:function() {
+	        var newCanvas = document.createElement('canvas');
+	        var context = newCanvas.getContext('2d');
+
+	        newCanvas.width = this.props.width;
+	        newCanvas.height = this.props.height;
+
+	        this.setCanvasResolution(newCanvas);
+
+	        var imageState = this.state.image;
+
+	        this.paintImage(context, {
+	            resource: imageState.resource,
+	            x: imageState.x - this.props.border,
+	            y: imageState.y - this.props.border,
+	            width: imageState.width,
+	            height: imageState.height
+	        });
+
+	        return newCanvas.toDataURL("image/jpeg", 1);
+	    },
+
+	    isDataURL:function(str) {
+	        var regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+	        return !!str.match(regex);
+	    },
+
+	    loadImage:function(imageURL) {
+	        var imageObj = new Image();
+	        imageObj.onload = this.handleImageReady.bind(this, imageObj);
+	        if (!this.isDataURL(imageURL)) imageObj.crossOrigin = 'anonymous';
+	        imageObj.src = imageURL;
+	    },
+
+	    setCanvasResolution:function(canvas) {
+	        var context = canvas.getContext('2d');
+
+	        var devicePixelRatio = window.devicePixelRatio || 1;
+
+	        if (true) {
+
+	            var oldWidth = canvas.width;
+	            var oldHeight = canvas.height;
+
+	            canvas.width = oldWidth * devicePixelRatio;
+	            canvas.height = oldHeight * devicePixelRatio;
+
+	            canvas.style.width = oldWidth + 'px';
+	            canvas.style.height = oldHeight + 'px';
+
+	            context.scale(devicePixelRatio, devicePixelRatio);
+	        }
+
+	    },
+
+	    componentDidMount:function() {
+	        var canvas = this.getDOMNode();
+	        var context = canvas.getContext('2d');
+	        this.setCanvasResolution(canvas);
+
+	        if (this.props.image) {
+	            this.loadImage(this.props.image);
+	        }
+	        this.paint(context);
+	        React.initializeTouchEvents(true);
+	    },
+
+	    componentWillUnmount:function() {
+	    },
+
+	    componentDidUpdate:function() {
+	        var context = this.getDOMNode().getContext('2d');
+	        context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
+	        this.paintImage(context, this.state.image);
+	        this.paint(context);
+	    },
+
+	    handleImageReady:function(image) {
+	        var imageState = this.getInitialSize(image.width, image.height);
+	        imageState.resource = image;
+	        imageState.x = this.props.border;
+	        imageState.y = this.props.border;
+	        this.setState({drag: false, pinch: false, image: imageState}, this.props.onImageReady);
+	    },
+
+	    getInitialSize:function(width, height) {
+	        var newHeight, newWidth, dimensions, canvasRatio, imageRatio;
+
+	        canvasRatio = this.props.height / this.props.width;
+	        imageRatio = height / width;
+
+	        if (canvasRatio > imageRatio) {
+	            newHeight = (this.props.height);
+	            newWidth = (width * (newHeight / height));
+	        } else {
+	            newWidth = (this.props.width);
+	            newHeight = (height * (newWidth / width));
+	        }
+
+	        return {
+	            height: newHeight,
+	            width: newWidth
+	        };
+	    },
+
+	    componentWillReceiveProps:function(newProps) {
+	        if (this.props.image != newProps.image) {
+	            this.loadImage(newProps.image);
+	        }
+	        if (this.state.scale != newProps.scale) {
+	            this.squeeze(newProps);
+	        }
+	    },
+
+	    paintImage:function(context, image) {
+	        if (image.resource) {
+	            context.save();
+	            context.globalCompositeOperation = 'destination-over';
+	            context.drawImage(image.resource, image.x, image.y,
+	                image.width * this.state.scale, image.height * this.state.scale);
+
+	            context.restore();
+	        }
+	    },
+
+	    paint:function(context) {
+	        context.save();
+	        context.translate(0, 0);
+	        context.fillStyle = "rgba(0,0,0,0.5)";
+
+	        var borderSize = this.props.border;
+	        var height = this.state.canvas.height;
+	        var width = this.state.canvas.width;
+
+	        context.fillRect(0, 0, width, borderSize); // top
+	        context.fillRect(0, height - borderSize, width, borderSize); // bottom
+	        context.fillRect(0, borderSize, borderSize, height - (borderSize * 2)); // left
+	        context.fillRect(width - borderSize, borderSize, borderSize, height - (borderSize * 2)); // right
+
+	        context.restore();
+	    },
+
+	    handleCursorDown:function(e) {
+	        e.preventDefault();
+	         
+	        if (event.targetTouches.length === 1)
+	            this.setState({
+	                drag: true,
+	                pinch : false,
+	                mouseX: null,
+	                mouseY: null
+	            });
+	        else if (event.targetTouches.length === 2){
+	            this.lastZoomScale = undefined;
+	            this.setState({
+	                drag: false,
+	                pinch : true,
+	                mouseX: null,
+	                mouseY: null
+	            })            
+	        }
+	    },
+
+	    handleCursorUp:function() {
+
+	        if (this.state.drag) {
+	            this.setState({drag: false});
+	        }
+	        if (this.state.pinch) {
+	            this.setState({pinch: false});
+	        }
+	    },
+
+	    handleCursorMove:function(e) {
+	        if (this.state.drag) {
+	            this.handleDrag();
+	        } if (this.state.pinch) {
+	            this.handleZoom(this.handlePinch());
+	        }
+	    },
+
+	    handlePinch:function(){
+	        
+	        var zoom = false;
+
+	        var p1 = event.targetTouches[0];
+	        var p2 = event.targetTouches[1];
+	        if(p1 && p2){
+	            var zoomScale = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2)); //euclidian distance
+
+	            if( this.lastZoomScale ) {
+	                zoom = {
+	                    scale : zoomScale - this.lastZoomScale,
+	                    center : {x: (p1.pageX + p2.pageX)/2, y : (p1.pageY + p2.pageY)/2}
+	                };
+	            }
+
+	            this.lastZoomScale = zoomScale;            
+	        }
+
+	        return zoom;
+	    },
+
+	    handleZoom:function(zoom){
+	        if (!zoom) {
+	            return;
+	        }
+
+	        var newScale = Math.max(1, this.state.scale + zoom.scale/100);
+	        
+	        var canvasmiddleX = this.state.canvas.width / 2;
+	        var canvasmiddleY = this.state.canvas.height / 2;
+
+	        var ratio = (newScale / this.state.scale - 1);
+	        var newPosX = this.state.image.x + ratio * (this.state.image.x - canvasmiddleX);
+	        var newPosY = this.state.image.y + ratio *(this.state.image.y - canvasmiddleY);
+
+	        
+	        this.setState({
+	            scale : newScale,
+	            image: {
+	                resource : this.state.image.resource,
+	                x: Math.min(newPosX, this.props.border),
+	                y: Math.min(newPosY, this.props.border),
+	                width: this.state.image.width,
+	                height: this.state.image.height
+	            }
+	        })
+	    },
+
+	    handleDrag:function(){
+	        var imageState = this.state.image;
+	        var lastX = imageState.x;
+	        var lastY = imageState.y;
+
+	        var mousePositionX = event.targetTouches[0].pageX;
+	        var mousePositionY = event.targetTouches[0].pageY;
+
+	        var newState = { mouseX: mousePositionX, mouseY: mousePositionY, image: imageState };
+
+	        if (this.state.mouseX && this.state.mouseY) {
+	            var xDiff = this.state.mouseX - mousePositionX;
+	            var yDiff = this.state.mouseY - mousePositionY;
+
+	            imageState.y = this.getBound(lastY - yDiff, "height", this.state.image);
+	            imageState.x = this.getBound(lastX - xDiff, "width", this.state.image);
+	        }
+
+	        this.setState(newState);
+	    },
+
+	    squeeze:function(props) {
+	        var imageState = this.state.image;
+	            imageState.y = this.getBound(imageState.y, "height", this.state.image);
+	            imageState.x = this.getBound(imageState.x, "width", this.state.image);
+	        this.setState({ image: imageState });
+	    },
+
+	    getBound:function(axis, dim, img){
+
+	        var diff = Math.ceil((img[dim] * this.state.scale - img[dim])/2) + this.props.border;
+	        var bound = Math.ceil(-img[dim] * this.state.scale + this.props.width + this.props.border);
+
+	        return Math.min(Math.min(Math.max(axis, bound), this.props.border), diff);
+	    },
+
+	    render:function() {
+	        var attributes = {
+	            width: this.props.width + (this.props.border * 2),
+	            height: this.props.height + (this.props.border * 2)
+	        };
+
+	        attributes[deviceEvents.down] = this.handleCursorDown;
+	        attributes[deviceEvents.move] = this.handleCursorMove;
+	        attributes[deviceEvents.up] = this.handleCursorUp;
+
+	        return React.createElement("canvas", React.__spread({},  attributes));
+	    }
+
+	});
+
+	module.exports = ImageCrop;
 
 /***/ }
 /******/ ]);

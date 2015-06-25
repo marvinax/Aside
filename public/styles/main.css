@@ -11,6 +11,13 @@ body{
 	margin : 0;
 }
 
+canvas, img {
+    image-rendering: optimizeQuality;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+}
+
 .user-image {
 	width: 100%;
 }
@@ -22,23 +29,23 @@ body{
 
 .caption {
 	background-color: #D46A6A;
-    padding : 0.7em;
-    border-radius : 0.5em;
-    margin : 0.2em;
-    width : 75%;
-    border : none;
-    outline : none;
-    resize : none;
-    font-size : 1em;
-    font-weight : lighter;
-    font-family: Seravek;
+  padding : 0.7em;
+  border-radius : 0.5em;
+  margin : 0.2em;
+  width : 75%;
+  border : none;
+  outline : none;
+  resize : none;
+  font-size : 1em;
+  font-weight : lighter;
+  font-family: Seravek;
 }
 
 .file-upload{
 	display : inline-block;
-    border-radius : 0.5em;
+  border-radius : 0.5em;
 	border : dashed;
-    margin-top: 2em;
+  margin-top: 2em;
 	width : 80%;
 	height : 200px;
 }
