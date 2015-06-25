@@ -70,6 +70,11 @@ var SingleFileUPload = React.createClass({
 	},
 
 	componentDidMount: function () {
+		console.log(this.xhr);
+		this.xhr.onprogress = function(e){
+			console.log(e);
+		}
+
 		this.xhr.onload = function(){
 			// The server is expected to reply a string ID. Change whatever
 			// you like, but remember xhr.response is a string, you need to
@@ -86,7 +91,11 @@ var SingleFileUPload = React.createClass({
 				this.form.append("file", this.state.cropped_file_data_uri, this.state.file.name);
 
 				this.xhr.open("POST", this.props.remoteHandler);
-				this.xhr.send(this.form);
+				this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+				this.xhr.send(JSON.stringify({
+					name:this.state.file.name,
+					data:this.state.cropped_file_data_uri
+				}));
 				break;
 			case "uploaded" : 
 				// this.props.uploadedHandler(this.state.fileId);
@@ -121,7 +130,7 @@ var SingleFileUPload = React.createClass({
 				<br />
 				<button ref="confirmCrop" type="button" onClick={this.handleUpload}>Upload!</button>
 			</div>)
-		} else if (this.state.status === "uploaded"){
+		} else if (this.state.status === "ready"){
 			content = (<div>
 				<img src={this.state.cropped_file_data_uri} width="200px"/>
 			</div>)
