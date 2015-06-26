@@ -52,7 +52,7 @@ canvas, img {
 
 .title{
 	text-align: center;
-	font-family:Seravek, Hiragino Sans GB, sans-serif;
+	font-family: Helvetica, Hiragino Sans GB, sans-serif;
 	letter-spacing: -0.05em;
 	font-size: 7em;
 }
@@ -62,7 +62,7 @@ canvas, img {
 	background: #999;
 	color: #fff;
 
-	font-family:Seravek, sans-serif;
+	font-family:Helvetica, sans-serif;
 	font-size : 200%;
 	
 	margin-right : 88px;

@@ -56,11 +56,9 @@ app.use(route.get('/', function *(){
 
 app.use(route.post("/upload", function *(){
 
-	// multipart upload
-	var something = yield parse.json(this);
-	console.log(something.data.length);
-
-	this.body = {ok: "yay"};
+	var res = yield parse.json(this);
+	console.log(res);
+	this.body = "ok";
 }));
 
 app.use(serve(path.join(__dirname, 'public/')));
