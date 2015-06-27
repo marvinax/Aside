@@ -8,12 +8,10 @@ var New = React.createClass({
 	render : function(){
 		return (
 			<div className="caption-container">
-			<div>
-				<textarea ref="caption" maxLength="60" className="caption" placeholder="Place your caption here"/>
-			</div>
-
 				<SingleFileUpload ref="fileUpload" remoteHandler="/upload" >
-					Tap to upload files
+					<img src="./icons/upload.svg" width="80%"/>
+					<br/>
+					点这儿上传
 				</SingleFileUpload>
 			</div>
 		);

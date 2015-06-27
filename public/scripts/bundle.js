@@ -33972,12 +33972,10 @@
 		render : function(){
 			return (
 				React.createElement("div", {className: "caption-container"}, 
-				React.createElement("div", null, 
-					React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", placeholder: "Place your caption here"})
-				), 
-
 					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"}, 
-						"Tap to upload files"
+						React.createElement("img", {src: "./icons/upload.svg", width: "80%"}), 
+						React.createElement("br", null), 
+						"点这儿上传"
 					)
 				)
 			);
@@ -34035,8 +34033,7 @@
 
 			reader.onload = function(upload) {
 				self.setState({
-					file : file,
-					file_data_uri: upload.target.result,
+					data: upload.target.result,
 					status : "loaded"
 				});
 			}
@@ -34046,7 +34043,7 @@
 
 		handleUpload : function(e){
 			this.setState({
-				cropped_file_data_uri : this.refs.crop.getImage(),
+				data : this.refs.crop.getImage(),
 				status : "ready"
 			})
 		},
@@ -34079,7 +34076,7 @@
 
 					var payload = JSON.stringify({
 						name : this.state.file.name,
-						file : this.state.cropped_file_data_uri
+						file : this.state.data
 					});
 
 					this.xhr.open("POST", this.props.remoteHandler);
@@ -34115,13 +34112,18 @@
 
 			else if (this.state.status === "loaded"){
 				content = (React.createElement("div", null, 
-					React.createElement(ImageCrop, {ref: "crop", image: this.state.file_data_uri}), 
+					React.createElement(ImageCrop, {
+						ref: "crop", 
+						image: this.state.data, 
+						width: screen.width - 60, 
+						height: screen.width - 60}
+					), 
 					React.createElement("br", null), 
 					React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Upload!")
 				))
 			} else {
 				content = (React.createElement("div", null, 
-					React.createElement("img", {src: this.state.cropped_file_data_uri, width: "200px"})
+					React.createElement("img", {src: this.state.data, width: screen.width - 60, style: {"margin-top":"25px"}})
 				))
 			}
 
@@ -34146,7 +34148,7 @@
 
 	var ImageCrop = React.createClass({displayName: "ImageCrop",
 
-	    getDefaultProps:function() {
+	    getDefaultProps: function() {
 	        return {
 	            border: 25,
 	            width: 200,
@@ -34156,7 +34158,7 @@
 	        }
 	    },
 
-	    getInitialState:function() {
+	    getInitialState: function() {
 	        return {
 	            drag: false,
 	            pinch: false,
@@ -34174,7 +34176,7 @@
 	        };
 	    },
 
-	    getImage:function() {
+	    getImage: function() {
 	        var newCanvas = document.createElement('canvas');
 	        var context = newCanvas.getContext('2d');
 
@@ -34196,19 +34198,19 @@
 	        return newCanvas.toDataURL("image/jpeg", 1);
 	    },
 
-	    isDataURL:function(str) {
+	    isDataURL: function(str) {
 	        var regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
 	        return !!str.match(regex);
 	    },
 
-	    loadImage:function(imageURL) {
+	    loadImage: function(imageURL) {
 	        var imageObj = new Image();
 	        imageObj.onload = this.handleImageReady.bind(this, imageObj);
 	        if (!this.isDataURL(imageURL)) imageObj.crossOrigin = 'anonymous';
 	        imageObj.src = imageURL;
 	    },
 
-	    setCanvasResolution:function(canvas) {
+	    setCanvasResolution: function(canvas) {
 	        var context = canvas.getContext('2d');
 
 	        var devicePixelRatio = window.devicePixelRatio || 1;
@@ -34229,7 +34231,7 @@
 
 	    },
 
-	    componentDidMount:function() {
+	    componentDidMount: function() {
 	        var canvas = this.getDOMNode();
 	        var context = canvas.getContext('2d');
 	        this.setCanvasResolution(canvas);
@@ -34241,17 +34243,17 @@
 	        React.initializeTouchEvents(true);
 	    },
 
-	    componentWillUnmount:function() {
+	    componentWillUnmount: function() {
 	    },
 
-	    componentDidUpdate:function() {
+	    componentDidUpdate: function() {
 	        var context = this.getDOMNode().getContext('2d');
 	        context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
 	        this.paintImage(context, this.state.image);
 	        this.paint(context);
 	    },
 
-	    handleImageReady:function(image) {
+	    handleImageReady: function(image) {
 	        var imageState = this.getInitialSize(image.width, image.height);
 	        imageState.resource = image;
 	        imageState.x = this.props.border;
@@ -34259,7 +34261,7 @@
 	        this.setState({drag: false, pinch: false, image: imageState}, this.props.onImageReady);
 	    },
 
-	    getInitialSize:function(width, height) {
+	    getInitialSize: function(width, height) {
 	        var newHeight, newWidth, dimensions, canvasRatio, imageRatio;
 
 	        canvasRatio = this.props.height / this.props.width;
@@ -34279,7 +34281,7 @@
 	        };
 	    },
 
-	    componentWillReceiveProps:function(newProps) {
+	    componentWillReceiveProps: function(newProps) {
 	        if (this.props.image != newProps.image) {
 	            this.loadImage(newProps.image);
 	        }
@@ -34288,7 +34290,7 @@
 	        }
 	    },
 
-	    paintImage:function(context, image) {
+	    paintImage: function(context, image) {
 	        if (image.resource) {
 	            context.save();
 	            context.globalCompositeOperation = 'destination-over';
@@ -34299,7 +34301,7 @@
 	        }
 	    },
 
-	    paint:function(context) {
+	    paint: function(context) {
 	        context.save();
 	        context.translate(0, 0);
 	        context.fillStyle = "rgba(0,0,0,0.5)";
@@ -34316,7 +34318,7 @@
 	        context.restore();
 	    },
 
-	    handleCursorDown:function(e) {
+	    handleCursorDown: function(e) {
 	        e.preventDefault();
 	         
 	        if (event.targetTouches.length === 1)
@@ -34337,7 +34339,7 @@
 	        }
 	    },
 
-	    handleCursorUp:function() {
+	    handleCursorUp: function() {
 
 	        if (this.state.drag) {
 	            this.setState({drag: false});
@@ -34347,7 +34349,7 @@
 	        }
 	    },
 
-	    handleCursorMove:function(e) {
+	    handleCursorMove: function(e) {
 	        if (this.state.drag) {
 	            this.handleDrag();
 	        } if (this.state.pinch) {
@@ -34355,7 +34357,7 @@
 	        }
 	    },
 
-	    handlePinch:function(){
+	    handlePinch: function(){
 	        
 	        var zoom = false;
 
@@ -34377,7 +34379,7 @@
 	        return zoom;
 	    },
 
-	    handleZoom:function(zoom){
+	    handleZoom: function(zoom){
 	        if (!zoom) {
 	            return;
 	        }
@@ -34404,7 +34406,7 @@
 	        })
 	    },
 
-	    handleDrag:function(){
+	    handleDrag: function(){
 	        var imageState = this.state.image;
 	        var lastX = imageState.x;
 	        var lastY = imageState.y;
@@ -34425,14 +34427,14 @@
 	        this.setState(newState);
 	    },
 
-	    squeeze:function(props) {
+	    squeeze: function(props) {
 	        var imageState = this.state.image;
 	            imageState.y = this.getBound(imageState.y, "height", this.state.image);
 	            imageState.x = this.getBound(imageState.x, "width", this.state.image);
 	        this.setState({ image: imageState });
 	    },
 
-	    getBound:function(axis, dim, img){
+	    getBound: function(axis, dim, img){
 
 	        var diff = Math.ceil((img[dim] * this.state.scale - img[dim])/2) + this.props.border;
 	        var bound = Math.ceil(-img[dim] * this.state.scale + this.props.width + this.props.border);
@@ -34440,7 +34442,7 @@
 	        return Math.min(Math.min(Math.max(axis, bound), this.props.border), diff);
 	    },
 
-	    render:function() {
+	    render: function() {
 	        var attributes = {
 	            width: this.props.width + (this.props.border * 2),
 	            height: this.props.height + (this.props.border * 2)

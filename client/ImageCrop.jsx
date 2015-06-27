@@ -9,7 +9,7 @@ var deviceEvents = {
 
 var ImageCrop = React.createClass({
 
-    getDefaultProps() {
+    getDefaultProps: function() {
         return {
             border: 25,
             width: 200,
@@ -19,7 +19,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    getInitialState() {
+    getInitialState: function() {
         return {
             drag: false,
             pinch: false,
@@ -37,7 +37,7 @@ var ImageCrop = React.createClass({
         };
     },
 
-    getImage() {
+    getImage: function() {
         var newCanvas = document.createElement('canvas');
         var context = newCanvas.getContext('2d');
 
@@ -59,19 +59,19 @@ var ImageCrop = React.createClass({
         return newCanvas.toDataURL("image/jpeg", 1);
     },
 
-    isDataURL(str) {
+    isDataURL: function(str) {
         var regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
         return !!str.match(regex);
     },
 
-    loadImage(imageURL) {
+    loadImage: function(imageURL) {
         var imageObj = new Image();
         imageObj.onload = this.handleImageReady.bind(this, imageObj);
         if (!this.isDataURL(imageURL)) imageObj.crossOrigin = 'anonymous';
         imageObj.src = imageURL;
     },
 
-    setCanvasResolution(canvas) {
+    setCanvasResolution: function(canvas) {
         var context = canvas.getContext('2d');
 
         var devicePixelRatio = window.devicePixelRatio || 1;
@@ -92,7 +92,7 @@ var ImageCrop = React.createClass({
 
     },
 
-    componentDidMount() {
+    componentDidMount: function() {
         var canvas = this.getDOMNode();
         var context = canvas.getContext('2d');
         this.setCanvasResolution(canvas);
@@ -104,17 +104,17 @@ var ImageCrop = React.createClass({
         React.initializeTouchEvents(true);
     },
 
-    componentWillUnmount() {
+    componentWillUnmount: function() {
     },
 
-    componentDidUpdate() {
+    componentDidUpdate: function() {
         var context = this.getDOMNode().getContext('2d');
         context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
         this.paintImage(context, this.state.image);
         this.paint(context);
     },
 
-    handleImageReady(image) {
+    handleImageReady: function(image) {
         var imageState = this.getInitialSize(image.width, image.height);
         imageState.resource = image;
         imageState.x = this.props.border;
@@ -122,7 +122,7 @@ var ImageCrop = React.createClass({
         this.setState({drag: false, pinch: false, image: imageState}, this.props.onImageReady);
     },
 
-    getInitialSize(width, height) {
+    getInitialSize: function(width, height) {
         var newHeight, newWidth, dimensions, canvasRatio, imageRatio;
 
         canvasRatio = this.props.height / this.props.width;
@@ -142,7 +142,7 @@ var ImageCrop = React.createClass({
         };
     },
 
-    componentWillReceiveProps(newProps) {
+    componentWillReceiveProps: function(newProps) {
         if (this.props.image != newProps.image) {
             this.loadImage(newProps.image);
         }
@@ -151,7 +151,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    paintImage(context, image) {
+    paintImage: function(context, image) {
         if (image.resource) {
             context.save();
             context.globalCompositeOperation = 'destination-over';
@@ -162,7 +162,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    paint(context) {
+    paint: function(context) {
         context.save();
         context.translate(0, 0);
         context.fillStyle = "rgba(0,0,0,0.5)";
@@ -179,7 +179,7 @@ var ImageCrop = React.createClass({
         context.restore();
     },
 
-    handleCursorDown(e) {
+    handleCursorDown: function(e) {
         e.preventDefault();
          
         if (event.targetTouches.length === 1)
@@ -200,7 +200,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    handleCursorUp() {
+    handleCursorUp: function() {
 
         if (this.state.drag) {
             this.setState({drag: false});
@@ -210,7 +210,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    handleCursorMove(e) {
+    handleCursorMove: function(e) {
         if (this.state.drag) {
             this.handleDrag();
         } if (this.state.pinch) {
@@ -218,7 +218,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    handlePinch(){
+    handlePinch: function(){
         
         var zoom = false;
 
@@ -240,7 +240,7 @@ var ImageCrop = React.createClass({
         return zoom;
     },
 
-    handleZoom(zoom){
+    handleZoom: function(zoom){
         if (!zoom) {
             return;
         }
@@ -267,7 +267,7 @@ var ImageCrop = React.createClass({
         })
     },
 
-    handleDrag(){
+    handleDrag: function(){
         var imageState = this.state.image;
         var lastX = imageState.x;
         var lastY = imageState.y;
@@ -288,14 +288,14 @@ var ImageCrop = React.createClass({
         this.setState(newState);
     },
 
-    squeeze(props) {
+    squeeze: function(props) {
         var imageState = this.state.image;
             imageState.y = this.getBound(imageState.y, "height", this.state.image);
             imageState.x = this.getBound(imageState.x, "width", this.state.image);
         this.setState({ image: imageState });
     },
 
-    getBound(axis, dim, img){
+    getBound: function(axis, dim, img){
 
         var diff = Math.ceil((img[dim] * this.state.scale - img[dim])/2) + this.props.border;
         var bound = Math.ceil(-img[dim] * this.state.scale + this.props.width + this.props.border);
@@ -303,7 +303,7 @@ var ImageCrop = React.createClass({
         return Math.min(Math.min(Math.max(axis, bound), this.props.border), diff);
     },
 
-    render() {
+    render: function() {
         var attributes = {
             width: this.props.width + (this.props.border * 2),
             height: this.props.height + (this.props.border * 2)

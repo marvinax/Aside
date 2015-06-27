@@ -16,10 +16,20 @@ var uuid = require('node-uuid');
 
 app.use(logger());
 app.use(compress());
+
 // DB
-var db = new loki('./data.json',
-	{autosave: true, autosaveInterval: 10000}),
-docs = db.addCollection('docs');
+var db = new loki('./data.json', {
+	autosave: true,
+	autosaveInterval: 5000,
+	autoload: true,
+	autoloadCallback : function(){
+		if (db.getCollection('docs') === null) {
+		db.addCollection('docs');
+		}
+ 	}
+ }),
+docs = db.getCollection('docs');
+
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 

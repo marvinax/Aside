@@ -43,8 +43,7 @@ var SingleFileUPload = React.createClass({
 
 		reader.onload = function(upload) {
 			self.setState({
-				file : file,
-				file_data_uri: upload.target.result,
+				data: upload.target.result,
 				status : "loaded"
 			});
 		}
@@ -54,7 +53,7 @@ var SingleFileUPload = React.createClass({
 
 	handleUpload : function(e){
 		this.setState({
-			cropped_file_data_uri : this.refs.crop.getImage(),
+			data : this.refs.crop.getImage(),
 			status : "ready"
 		})
 	},
@@ -87,7 +86,7 @@ var SingleFileUPload = React.createClass({
 
 				var payload = JSON.stringify({
 					name : this.state.file.name,
-					file : this.state.cropped_file_data_uri
+					file : this.state.data
 				});
 
 				this.xhr.open("POST", this.props.remoteHandler);
@@ -123,13 +122,18 @@ var SingleFileUPload = React.createClass({
 
 		else if (this.state.status === "loaded"){
 			content = (<div>
-				<ImageCrop ref="crop" image={this.state.file_data_uri} />
+				<ImageCrop
+					ref="crop"
+					image={this.state.data}
+					width={screen.width - 60}
+					height={screen.width - 60}
+				/>
 				<br />
 				<button ref="confirmCrop" type="button" onClick={this.handleUpload}>Upload!</button>
 			</div>)
 		} else {
 			content = (<div>
-				<img src={this.state.cropped_file_data_uri} width="200px"/>
+				<img src={this.state.data} width={screen.width - 60} style={{"margin-top":"25px"}}/>
 			</div>)
 		}
 

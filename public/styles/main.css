@@ -22,11 +22,6 @@ canvas, img {
 	width: 100%;
 }
 
-.caption-container {
-	text-align: center;
-	margin-top : 3em;
-}
-
 .caption {
 	background-color: #D46A6A;
   padding : 0.7em;
@@ -46,7 +41,7 @@ canvas, img {
   border-radius : 0.5em;
 	border : dashed;
   margin-top: 2em;
-	width : 80%;
+	width : 200px;
 	height : 200px;
 }
 
