@@ -43,7 +43,7 @@ var ImageCrop = React.createClass({
 
         newCanvas.width = this.props.width;
         newCanvas.height = this.props.height;
-
+        context.clearRect(0, 0, newCanvas.width, newCanvas.height);
         this.setCanvasResolution(newCanvas);
 
         var imageState = this.state.image;
@@ -111,7 +111,7 @@ var ImageCrop = React.createClass({
         var context = this.getDOMNode().getContext('2d');
         context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
         this.paintImage(context, this.state.image);
-        this.paint(context);
+        this.paintFrame(context);
     },
 
     handleImageReady: function(image) {
@@ -162,7 +162,7 @@ var ImageCrop = React.createClass({
         }
     },
 
-    paint: function(context) {
+    paintFrame: function(context) {
         context.save();
         context.translate(0, 0);
         context.fillStyle = "rgba(0,0,0,0.5)";

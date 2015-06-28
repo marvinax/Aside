@@ -1,0 +1,18 @@
+{
+  "name": "image-crop",
+  "version": "0.1.0",
+  "author"  : "Marvin Tao"
+  "description": "A React compoenent help you to crop a image from a data_uri input, and return the cropped image as a data_uri form as well.",
+  "main": "index.js",
+  "scripts": {
+    "build" : "jsx ./src/ImageCrop.jsx > index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "image-crop",
+    "image",
+    "crop"
+  ],
+  "author": "Marvin Tao <nightvista@gmail.com>",
+  "license": "MIT"
+}
