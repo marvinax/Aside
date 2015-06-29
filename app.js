@@ -67,7 +67,7 @@ app.use(route.get('/', function *(){
 app.use(route.post("/upload", function *(){
 
 	var res = yield parse.json(this);
-	console.log(res);
+	console.log(Object.keys(res));
 	this.body = "ok";
 }));
 

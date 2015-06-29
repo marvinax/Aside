@@ -1,6 +1,6 @@
 'use strict'
 var React = require('react/addons');
-
+var Circle = require('rc-progress').Circle;
 var ImageCrop = require("./ImageCrop.jsx");
 
 // # React.js AJAX Single File upload input
@@ -51,31 +51,32 @@ var SingleFileUPload = React.createClass({
 		reader.readAsDataURL(file);
 	},
 
-	handleUpload : function(e){
+	handleUpload : function(){
+		console.log(this.refs.caption.getDOMNode().value);
+
+		var payload = JSON.stringify({
+			dataSomething : this.refs.crop.getImage(),
+			caption : this.refs.caption.value
+		});
+
+		this.xhr.open("POST", this.props.remoteHandler);
+		this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		this.xhr.send(payload);
+	},
+
+	xhrUploadProgress : function(e){
 		this.setState({
-			data : this.refs.crop.getImage(),
-			status : "ready"
+			progress : 	parseInt(e.loaded/e.total * 100),
+			isUploading : true
 		})
 	},
 
-	success : function(){
-		if(this.xhr.status === 200)
-			console.log("apparently we received something");
-		else
-			console.log(this.xhr.status);
-	},
-
 	componentDidMount: function () {
-		this.xhr.upload.addEventListener("progress", function(e){
-			console.log(e.loaded/e.total);
-		}, false)
+		this.xhr.upload.addEventListener("progress", this.xhrUploadProgress, false)
 
-		this.xhr.onload = function(){
-			// The server is expected to reply a string ID. Change whatever
-			// you like, but remember xhr.response is a string, you need to
-			// parse it into object if your server returns an object.
-			this.setState({status : "uploaded", fileId : this.xhr.response});
-		}.bind(this);
+		// this.xhr.onload = function(){
+		// 	this.setState({status : "uploaded", fileId : this.xhr.response});
+		// }.bind(this);
 	},
 
 	componentDidUpdate: function (prevProps, prevState) {
@@ -83,15 +84,6 @@ var SingleFileUPload = React.createClass({
 			case "loaded" :
 				break;
 			case "ready" : 
-
-				var payload = JSON.stringify({
-					name : this.state.file.name,
-					file : this.state.data
-				});
-
-				this.xhr.open("POST", this.props.remoteHandler);
-				this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-				this.xhr.send(payload);
 				break;
 			case "uploaded" : 
 				// this.props.uploadedHandler(this.state.fileId);
@@ -121,6 +113,19 @@ var SingleFileUPload = React.createClass({
 			</div>);
 
 		else if (this.state.status === "loaded"){
+
+			var UploadCircle;
+			if (this.state.isUploading){
+			    UploadCircle = (<div style={{"zIndex":-99999}}>
+			    	<Circle
+			    		percent={this.state.progress}
+			    		strokeWidth="4"
+			    	/>
+			    	</div>);
+			} else {
+				UploadCircle = <button ref="confirmCrop" type="button" onClick={this.handleUpload}>Confirm!</button>;
+			}
+
 			content = (<div>
 				<ImageCrop
 					ref="crop"
@@ -129,12 +134,13 @@ var SingleFileUPload = React.createClass({
 					height={screen.width - 60}
 				/>
 				<br />
-				<button ref="confirmCrop" type="button" onClick={this.handleUpload}>Upload!</button>
+				<div>
+					<textarea ref="caption" maxLength="60" className="caption" style={{width:window.innerWidth - 30}} placeholder="Place your caption here"/>
+				</div>
+				<br />
+				{UploadCircle}
 			</div>)
-		} else {
-			content = (<div>
-				<img src={this.state.data} width={screen.width - 60} style={{"margin-top":"25px"}}/>
-			</div>)
+
 		}
 
 		return content;

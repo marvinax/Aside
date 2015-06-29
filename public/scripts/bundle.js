@@ -33990,7 +33990,7 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
-
+	var Circle = __webpack_require__(212).Circle;
 	var ImageCrop = __webpack_require__(208);
 
 	// # React.js AJAX Single File upload input
@@ -34041,31 +34041,32 @@
 			reader.readAsDataURL(file);
 		},
 
-		handleUpload : function(e){
+		handleUpload : function(){
+			console.log(this.refs.caption.getDOMNode().value);
+
+			var payload = JSON.stringify({
+				dataSomething : this.refs.crop.getImage(),
+				caption : this.refs.caption.value
+			});
+
+			this.xhr.open("POST", this.props.remoteHandler);
+			this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+			this.xhr.send(payload);
+		},
+
+		xhrUploadProgress : function(e){
 			this.setState({
-				data : this.refs.crop.getImage(),
-				status : "ready"
+				progress : 	parseInt(e.loaded/e.total * 100),
+				isUploading : true
 			})
 		},
 
-		success : function(){
-			if(this.xhr.status === 200)
-				console.log("apparently we received something");
-			else
-				console.log(this.xhr.status);
-		},
-
 		componentDidMount: function () {
-			this.xhr.upload.addEventListener("progress", function(e){
-				console.log(e.loaded/e.total);
-			}, false)
+			this.xhr.upload.addEventListener("progress", this.xhrUploadProgress, false)
 
-			this.xhr.onload = function(){
-				// The server is expected to reply a string ID. Change whatever
-				// you like, but remember xhr.response is a string, you need to
-				// parse it into object if your server returns an object.
-				this.setState({status : "uploaded", fileId : this.xhr.response});
-			}.bind(this);
+			// this.xhr.onload = function(){
+			// 	this.setState({status : "uploaded", fileId : this.xhr.response});
+			// }.bind(this);
 		},
 
 		componentDidUpdate: function (prevProps, prevState) {
@@ -34073,15 +34074,6 @@
 				case "loaded" :
 					break;
 				case "ready" : 
-
-					var payload = JSON.stringify({
-						name : this.state.file.name,
-						file : this.state.data
-					});
-
-					this.xhr.open("POST", this.props.remoteHandler);
-					this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-					this.xhr.send(payload);
 					break;
 				case "uploaded" : 
 					// this.props.uploadedHandler(this.state.fileId);
@@ -34111,6 +34103,19 @@
 				));
 
 			else if (this.state.status === "loaded"){
+
+				var UploadCircle;
+				if (this.state.isUploading){
+				    UploadCircle = (React.createElement("div", {style: {"zIndex":-99999}}, 
+				    	React.createElement(Circle, {
+				    		percent: this.state.progress, 
+				    		strokeWidth: "4"}
+				    	)
+				    	));
+				} else {
+					UploadCircle = React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Confirm!");
+				}
+
 				content = (React.createElement("div", null, 
 					React.createElement(ImageCrop, {
 						ref: "crop", 
@@ -34119,12 +34124,13 @@
 						height: screen.width - 60}
 					), 
 					React.createElement("br", null), 
-					React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Upload!")
+					React.createElement("div", null, 
+						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"})
+					), 
+					React.createElement("br", null), 
+					UploadCircle
 				))
-			} else {
-				content = (React.createElement("div", null, 
-					React.createElement("img", {src: this.state.data, width: screen.width - 60, style: {"margin-top":"25px"}})
-				))
+
 			}
 
 			return content;
@@ -34458,6 +34464,159 @@
 	});
 
 	module.exports = ImageCrop;
+
+/***/ },
+/* 209 */,
+/* 210 */,
+/* 211 */,
+/* 212 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	module.exports = __webpack_require__(213);
+
+/***/ },
+/* 213 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var assign = __webpack_require__(214);
+	var React = __webpack_require__(177);
+	var defaultProps = {
+	  strokeWidth: 1,
+	  strokeColor: '#3FC7FA',
+	  trailWidth: 1,
+	  trailColor: '#D9D9D9'
+	};
+
+	var Line = React.createClass({
+	  displayName: 'Line',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var pathStyle = {
+	      'strokeDasharray': '100px, 100px',
+	      'strokeDashoffset': '' + (100 - props.percent) + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s linear'
+	    };
+
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (item === 'strokeWidth' && props.strokeWidth && (!parseFloat(props.strokeWidth) || parseFloat(props.strokeWidth) > 100 || parseFloat(props.strokeWidth) < 0)) {
+	        props[item] = defaultProps[item];
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    var strokeWidth = props.strokeWidth;
+	    var center = strokeWidth / 2;
+	    var right = 100 - strokeWidth / 2;
+	    var pathString = 'M ' + center + ',' + center + ' L ' + right + ',' + center;
+	    var viewBoxString = '0 0 100 ' + strokeWidth;
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-line', viewBox: viewBoxString, preserveAspectRatio: 'none' },
+	      React.createElement('path', { className: 'rc-progress-line-trail', d: pathString, strokeLinecap: 'round',
+	        stroke: props.trailColor, strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-line-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	var Circle = React.createClass({
+	  displayName: 'Circle',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var strokeWidth = props.strokeWidth;
+	    var radius = 50 - strokeWidth / 2;
+	    var pathString = 'M 50,50 m 0,-' + radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,' + 2 * radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,-' + 2 * radius;
+	    var len = Math.PI * 2 * radius;
+	    var pathStyle = {
+	      'strokeDasharray': '' + len + 'px ' + len + 'px',
+	      'strokeDashoffset': '' + (100 - props.percent) / 100 * len + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s ease'
+	    };
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-circle', viewBox: '0 0 100 100' },
+	      React.createElement('path', { className: 'rc-progress-circle-trail', d: pathString, stroke: props.trailColor,
+	        strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-circle-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	module.exports = {
+	  Line: Line,
+	  Circle: Circle
+	};
+
+/***/ },
+/* 214 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function ToObject(val) {
+		if (val == null) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function ownEnumerableKeys(obj) {
+		var keys = Object.getOwnPropertyNames(obj);
+
+		if (Object.getOwnPropertySymbols) {
+			keys = keys.concat(Object.getOwnPropertySymbols(obj));
+		}
+
+		return keys.filter(function (key) {
+			return propIsEnumerable.call(obj, key);
+		});
+	}
+
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var keys;
+		var to = ToObject(target);
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = arguments[s];
+			keys = ownEnumerableKeys(Object(from));
+
+			for (var i = 0; i < keys.length; i++) {
+				to[keys[i]] = from[keys[i]];
+			}
+		}
+
+		return to;
+	};
+
 
 /***/ }
 /******/ ]);
