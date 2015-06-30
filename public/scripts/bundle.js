@@ -34106,10 +34106,10 @@
 
 				var UploadCircle;
 				if (this.state.isUploading){
-				    UploadCircle = (React.createElement("div", {style: {"zIndex":-99999}}, 
+				    UploadCircle = (React.createElement("div", {style: {inline: "block", margin: "auto", "textAlign":"center", width:"200px"}}, 
 				    	React.createElement(Circle, {
 				    		percent: this.state.progress, 
-				    		strokeWidth: "4"}
+				    		strokeWidth: "6"}
 				    	)
 				    	));
 				} else {
@@ -34125,10 +34125,10 @@
 					), 
 					React.createElement("br", null), 
 					React.createElement("div", null, 
-						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"})
+						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"}), 
+						UploadCircle
 					), 
-					React.createElement("br", null), 
-					UploadCircle
+					React.createElement("br", null)
 				))
 
 			}

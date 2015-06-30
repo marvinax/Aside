@@ -116,10 +116,10 @@ var SingleFileUPload = React.createClass({
 
 			var UploadCircle;
 			if (this.state.isUploading){
-			    UploadCircle = (<div style={{"zIndex":-99999}}>
+			    UploadCircle = (<div style={{inline: "block", margin: "auto", "textAlign":"center", width:"200px"}}>
 			    	<Circle
 			    		percent={this.state.progress}
-			    		strokeWidth="4"
+			    		strokeWidth="6"
 			    	/>
 			    	</div>);
 			} else {
@@ -136,9 +136,9 @@ var SingleFileUPload = React.createClass({
 				<br />
 				<div>
 					<textarea ref="caption" maxLength="60" className="caption" style={{width:window.innerWidth - 30}} placeholder="Place your caption here"/>
+					{UploadCircle}
 				</div>
 				<br />
-				{UploadCircle}
 			</div>)
 
 		}
