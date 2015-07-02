@@ -22600,21 +22600,23 @@
 
 	/** @jsx React.DOM */"use strict";
 
-	var Router                    = __webpack_require__(176);
+	var Router                    = __webpack_require__(184);
 	var Route                     = __webpack_require__(197);
 	var Link                      = __webpack_require__(198);
 
-	var RouterMixin               = __webpack_require__(178);
-	var AsyncRouteRenderingMixin  = __webpack_require__(193);
-	var RouteRenderingMixin       = __webpack_require__(196);
+	var RouterMixin               = __webpack_require__(185);
+	var AsyncRouteRenderingMixin  = __webpack_require__(194);
+	var RouteRenderingMixin       = __webpack_require__(176);
 
 	var NavigatableMixin          = __webpack_require__(199);
 
-	var environment               = __webpack_require__(188);
+	var environment               = __webpack_require__(189);
 
 	var CaptureClicks             = __webpack_require__(200);
 
-	module.exports = {
+	var URLPattern                = __webpack_require__(187);
+
+	var exportsObject = {
 	  Locations: Router.Locations,
 	  Pages: Router.Pages,
 
@@ -22631,8 +22633,20 @@
 	  AsyncRouteRenderingMixin: AsyncRouteRenderingMixin,
 
 	  NavigatableMixin: NavigatableMixin,
-	  CaptureClicks: CaptureClicks
+	  CaptureClicks: CaptureClicks,
+
+	  // The fn used to create a compiler for "/user/:id"-style routes is exposed here so it can be overridden.
+	  createURLPatternCompiler: function() {
+	    return new URLPattern.Compiler();
+	  },
+
+	  // For ES6 imports, which can't modify module.exports directly
+	  setCreateURLPatternCompilerFactory: function(fn) {
+	    exportsObject.createURLPatternCompiler = fn;
+	  }
 	};
+
+	module.exports = exportsObject;
 
 
 /***/ },
@@ -22641,10 +22655,345 @@
 
 	/** @jsx React.DOM */"use strict";
 
+	var React = __webpack_require__(177);
+	var cloneWithProps = __webpack_require__(165);
+	var assign = Object.assign || __webpack_require__(178);
+
+
+	/**
+	 * Mixin for routers which implements the simplest rendering strategy.
+	 */
+	var RouteRenderingMixin = {
+
+	  renderRouteHandler: function(props) {
+	    var handler = this.state.handler;
+	    props = assign({ref: this.state.match.route.ref}, props);
+	    // If we were passed an element, we need to clone it before passing it along.
+	    if (React.isValidElement(handler)) {
+	      return cloneWithProps(handler, props);
+	    }
+	    return React.createElement(handler, props);
+	  }
+
+	};
+
+	module.exports = RouteRenderingMixin;
+
+
+/***/ },
+/* 177 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */module.exports = __webpack_require__(29);
+
+
+/***/ },
+/* 178 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	// modified from https://github.com/es-shims/es6-shim
+	var keys = __webpack_require__(179);
+	var canBeObject = function (obj) {
+		return typeof obj !== 'undefined' && obj !== null;
+	};
+	var hasSymbols = __webpack_require__(181)();
+	var defineProperties = __webpack_require__(182);
+	var toObject = Object;
+	var push = Array.prototype.push;
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	var assignShim = function assign(target, source1) {
+		if (!canBeObject(target)) { throw new TypeError('target must be an object'); }
+		var objTarget = toObject(target);
+		var s, source, i, props, syms;
+		for (s = 1; s < arguments.length; ++s) {
+			source = toObject(arguments[s]);
+			props = keys(source);
+			if (hasSymbols && Object.getOwnPropertySymbols) {
+				syms = Object.getOwnPropertySymbols(source);
+				for (i = 0; i < syms.length; ++i) {
+					if (propIsEnumerable.call(source, syms[i])) {
+						push.call(props, syms[i]);
+					}
+				}
+			}
+			for (i = 0; i < props.length; ++i) {
+				objTarget[props[i]] = source[props[i]];
+			}
+		}
+		return objTarget;
+	};
+
+	defineProperties(assignShim, {
+		shim: function shimObjectAssign() {
+			var assignHasPendingExceptions = function () {
+				if (!Object.assign || !Object.preventExtensions) {
+					return false;
+				}
+				// Firefox 37 still has "pending exception" logic in its Object.assign implementation,
+				// which is 72% slower than our shim, and Firefox 40's native implementation.
+				var thrower = Object.preventExtensions({ 1: 2 });
+				try {
+					Object.assign(thrower, 'xy');
+				} catch (e) {
+					return thrower[1] === 'y';
+				}
+			};
+			defineProperties(
+				Object,
+				{ assign: assignShim },
+				{ assign: assignHasPendingExceptions }
+			);
+			return Object.assign || assignShim;
+		}
+	});
+
+	module.exports = assignShim;
+
+
+/***/ },
+/* 179 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	// modified from https://github.com/es-shims/es5-shim
+	var has = Object.prototype.hasOwnProperty;
+	var toStr = Object.prototype.toString;
+	var slice = Array.prototype.slice;
+	var isArgs = __webpack_require__(180);
+	var hasDontEnumBug = !({ 'toString': null }).propertyIsEnumerable('toString');
+	var hasProtoEnumBug = function () {}.propertyIsEnumerable('prototype');
+	var dontEnums = [
+		'toString',
+		'toLocaleString',
+		'valueOf',
+		'hasOwnProperty',
+		'isPrototypeOf',
+		'propertyIsEnumerable',
+		'constructor'
+	];
+
+	var keysShim = function keys(object) {
+		var isObject = object !== null && typeof object === 'object';
+		var isFunction = toStr.call(object) === '[object Function]';
+		var isArguments = isArgs(object);
+		var isString = isObject && toStr.call(object) === '[object String]';
+		var theKeys = [];
+
+		if (!isObject && !isFunction && !isArguments) {
+			throw new TypeError('Object.keys called on a non-object');
+		}
+
+		var skipProto = hasProtoEnumBug && isFunction;
+		if (isString && object.length > 0 && !has.call(object, 0)) {
+			for (var i = 0; i < object.length; ++i) {
+				theKeys.push(String(i));
+			}
+		}
+
+		if (isArguments && object.length > 0) {
+			for (var j = 0; j < object.length; ++j) {
+				theKeys.push(String(j));
+			}
+		} else {
+			for (var name in object) {
+				if (!(skipProto && name === 'prototype') && has.call(object, name)) {
+					theKeys.push(String(name));
+				}
+			}
+		}
+
+		if (hasDontEnumBug) {
+			var ctor = object.constructor;
+			var skipConstructor = ctor && ctor.prototype === object;
+
+			for (var k = 0; k < dontEnums.length; ++k) {
+				if (!(skipConstructor && dontEnums[k] === 'constructor') && has.call(object, dontEnums[k])) {
+					theKeys.push(dontEnums[k]);
+				}
+			}
+		}
+		return theKeys;
+	};
+
+	keysShim.shim = function shimObjectKeys() {
+		if (!Object.keys) {
+			Object.keys = keysShim;
+		} else {
+			var keysWorksWithArguments = (function () {
+				// Safari 5.0 bug
+				return (Object.keys(arguments) || '').length === 2;
+			}(1, 2));
+			if (!keysWorksWithArguments) {
+				var originalKeys = Object.keys;
+				Object.keys = function keys(object) {
+					if (isArgs(object)) {
+						return originalKeys(slice.call(object));
+					} else {
+						return originalKeys(object);
+					}
+				};
+			}
+		}
+		return Object.keys || keysShim;
+	};
+
+	module.exports = keysShim;
+
+
+/***/ },
+/* 180 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var toStr = Object.prototype.toString;
+
+	module.exports = function isArguments(value) {
+		var str = toStr.call(value);
+		var isArgs = str === '[object Arguments]';
+		if (!isArgs) {
+			isArgs = str !== '[object Array]' &&
+				value !== null &&
+				typeof value === 'object' &&
+				typeof value.length === 'number' &&
+				value.length >= 0 &&
+				toStr.call(value.callee) === '[object Function]';
+		}
+		return isArgs;
+	};
+
+
+/***/ },
+/* 181 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */var keys = __webpack_require__(179);
+
+	module.exports = function hasSymbols() {
+		if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+		if (typeof Symbol.iterator === 'symbol') { return true; }
+
+		var obj = {};
+		var sym = Symbol('test');
+		if (typeof sym === 'string') { return false; }
+		if (sym instanceof Symbol) { return false; }
+		obj[sym] = 42;
+		for (sym in obj) { return false; }
+		if (keys(obj).length !== 0) { return false; }
+		if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+		if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+		var syms = Object.getOwnPropertySymbols(obj);
+		if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+		if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+		if (typeof Object.getOwnPropertyDescriptor === 'function') {
+			var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+			if (descriptor.value !== 42 || descriptor.enumerable !== true) { return false; }
+		}
+
+		return true;
+	};
+
+
+/***/ },
+/* 182 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var keys = __webpack_require__(179);
+	var foreach = __webpack_require__(183);
+
+	var toStr = Object.prototype.toString;
+
+	var isFunction = function (fn) {
+		return typeof fn === 'function' && toStr.call(fn) === '[object Function]';
+	};
+
+	var arePropertyDescriptorsSupported = function () {
+		var obj = {};
+		try {
+			Object.defineProperty(obj, 'x', { value: obj });
+			return obj.x === obj;
+		} catch (e) { /* this is IE 8. */
+			return false;
+		}
+	};
+	var supportsDescriptors = Object.defineProperty && arePropertyDescriptorsSupported();
+
+	var defineProperty = function (object, name, value, predicate) {
+		if (name in object && (!isFunction(predicate) || !predicate())) {
+			return;
+		}
+		if (supportsDescriptors) {
+			Object.defineProperty(object, name, {
+				configurable: true,
+				enumerable: false,
+				writable: true,
+				value: value
+			});
+		} else {
+			object[name] = value;
+		}
+	};
+
+	var defineProperties = function (object, map) {
+		var predicates = arguments.length > 2 ? arguments[2] : {};
+		foreach(keys(map), function (name) {
+			defineProperty(object, name, map[name], predicates[name]);
+		});
+	};
+
+	defineProperties.supportsDescriptors = !!supportsDescriptors;
+
+	module.exports = defineProperties;
+
+
+/***/ },
+/* 183 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */
+	var hasOwn = Object.prototype.hasOwnProperty;
+	var toString = Object.prototype.toString;
+
+	module.exports = function forEach (obj, fn, ctx) {
+	    if (toString.call(fn) !== '[object Function]') {
+	        throw new TypeError('iterator must be a function');
+	    }
+	    var l = obj.length;
+	    if (l === +l) {
+	        for (var i = 0; i < l; i++) {
+	            fn.call(ctx, obj[i], i, obj);
+	        }
+	    } else {
+	        for (var k in obj) {
+	            if (hasOwn.call(obj, k)) {
+	                fn.call(ctx, obj[k], k, obj);
+	            }
+	        }
+	    }
+	};
+
+
+
+/***/ },
+/* 184 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */"use strict";
+
 	var React                     = __webpack_require__(177);
-	var RouterMixin               = __webpack_require__(178);
-	var AsyncRouteRenderingMixin  = __webpack_require__(193);
-	var assign                    = Object.assign || __webpack_require__(179);
+	var RouterMixin               = __webpack_require__(185);
+	var AsyncRouteRenderingMixin  = __webpack_require__(194);
+	var assign                    = Object.assign || __webpack_require__(178);
 
 	/**
 	 * Create a new router class
@@ -22667,7 +23016,7 @@
 	    getDefaultProps: function() {
 	      return {
 	        component: component
-	      }
+	      };
 	    },
 
 	    render: function() {
@@ -22685,27 +23034,20 @@
 	  createRouter: createRouter,
 	  Locations: createRouter('Locations', 'div'),
 	  Pages: createRouter('Pages', 'body')
-	}
+	};
 
 
 /***/ },
-/* 177 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */module.exports = __webpack_require__(29);
-
-
-/***/ },
-/* 178 */
+/* 185 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
 	var React         = __webpack_require__(177);
 	var invariant     = __webpack_require__(7);
-	var assign        = Object.assign || __webpack_require__(179);
-	var matchRoutes   = __webpack_require__(185);
-	var Environment   = __webpack_require__(188);
+	var assign        = Object.assign || __webpack_require__(178);
+	var matchRoutes   = __webpack_require__(186);
+	var Environment   = __webpack_require__(189);
 
 	var RouterMixin = {
 	  mixins: [Environment.Mixin],
@@ -22753,7 +23095,7 @@
 	      invariant(
 	        props.path ||
 	        isString(parentMatch.unmatchedPath) ||
-	        parentMatch.matchedPath == parentMatch.path,
+	        parentMatch.matchedPath === parentMatch.path,
 	        "contextual router has nothing to match on: %s", parentMatch.unmatchedPath
 	      );
 
@@ -22915,314 +23257,16 @@
 
 
 /***/ },
-/* 179 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	// modified from https://github.com/es-shims/es6-shim
-	var keys = __webpack_require__(180);
-	var canBeObject = function (obj) {
-		return typeof obj !== 'undefined' && obj !== null;
-	};
-	var hasSymbols = __webpack_require__(182)();
-	var defineProperties = __webpack_require__(183);
-	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-	var isEnumerableOn = function (obj) {
-		return function isEnumerable(prop) {
-			return propIsEnumerable.call(obj, prop);
-		};
-	};
-
-	var assignShim = function assign(target, source1) {
-		if (!canBeObject(target)) { throw new TypeError('target must be an object'); }
-		var objTarget = Object(target);
-		var s, source, i, props;
-		for (s = 1; s < arguments.length; ++s) {
-			source = Object(arguments[s]);
-			props = keys(source);
-			if (hasSymbols && Object.getOwnPropertySymbols) {
-				props.push.apply(props, Object.getOwnPropertySymbols(source).filter(isEnumerableOn(source)));
-			}
-			for (i = 0; i < props.length; ++i) {
-				objTarget[props[i]] = source[props[i]];
-			}
-		}
-		return objTarget;
-	};
-
-	defineProperties(assignShim, {
-		shim: function shimObjectAssign() {
-			var assignHasPendingExceptions = function () {
-				if (!Object.assign || !Object.preventExtensions) {
-					return false;
-				}
-				// Firefox 37 still has "pending exception" logic in its Object.assign implementation,
-				// which is 72% slower than our shim, and Firefox 40's native implementation.
-				var thrower = Object.preventExtensions({ 1: 2 });
-				try {
-					Object.assign(thrower, 'xy');
-				} catch (e) {
-					return thrower[1] === 'y';
-				}
-			};
-			defineProperties(
-				Object,
-				{ assign: assignShim },
-				{ assign: assignHasPendingExceptions }
-			);
-			return Object.assign || assignShim;
-		}
-	});
-
-	module.exports = assignShim;
-
-
-
-/***/ },
-/* 180 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	// modified from https://github.com/es-shims/es5-shim
-	var has = Object.prototype.hasOwnProperty;
-	var toStr = Object.prototype.toString;
-	var slice = Array.prototype.slice;
-	var isArgs = __webpack_require__(181);
-	var hasDontEnumBug = !({ 'toString': null }).propertyIsEnumerable('toString');
-	var hasProtoEnumBug = function () {}.propertyIsEnumerable('prototype');
-	var dontEnums = [
-		'toString',
-		'toLocaleString',
-		'valueOf',
-		'hasOwnProperty',
-		'isPrototypeOf',
-		'propertyIsEnumerable',
-		'constructor'
-	];
-
-	var keysShim = function keys(object) {
-		var isObject = object !== null && typeof object === 'object';
-		var isFunction = toStr.call(object) === '[object Function]';
-		var isArguments = isArgs(object);
-		var isString = isObject && toStr.call(object) === '[object String]';
-		var theKeys = [];
-
-		if (!isObject && !isFunction && !isArguments) {
-			throw new TypeError('Object.keys called on a non-object');
-		}
-
-		var skipProto = hasProtoEnumBug && isFunction;
-		if (isString && object.length > 0 && !has.call(object, 0)) {
-			for (var i = 0; i < object.length; ++i) {
-				theKeys.push(String(i));
-			}
-		}
-
-		if (isArguments && object.length > 0) {
-			for (var j = 0; j < object.length; ++j) {
-				theKeys.push(String(j));
-			}
-		} else {
-			for (var name in object) {
-				if (!(skipProto && name === 'prototype') && has.call(object, name)) {
-					theKeys.push(String(name));
-				}
-			}
-		}
-
-		if (hasDontEnumBug) {
-			var ctor = object.constructor;
-			var skipConstructor = ctor && ctor.prototype === object;
-
-			for (var k = 0; k < dontEnums.length; ++k) {
-				if (!(skipConstructor && dontEnums[k] === 'constructor') && has.call(object, dontEnums[k])) {
-					theKeys.push(dontEnums[k]);
-				}
-			}
-		}
-		return theKeys;
-	};
-
-	keysShim.shim = function shimObjectKeys() {
-		if (!Object.keys) {
-			Object.keys = keysShim;
-		} else {
-			var keysWorksWithArguments = (function () {
-				// Safari 5.0 bug
-				return (Object.keys(arguments) || '').length === 2;
-			}(1, 2));
-			if (!keysWorksWithArguments) {
-				var originalKeys = Object.keys;
-				Object.keys = function keys(object) {
-					if (isArgs(object)) {
-						return originalKeys(slice.call(object));
-					} else {
-						return originalKeys(object);
-					}
-				};
-			}
-		}
-		return Object.keys || keysShim;
-	};
-
-	module.exports = keysShim;
-
-
-/***/ },
-/* 181 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	var toStr = Object.prototype.toString;
-
-	module.exports = function isArguments(value) {
-		var str = toStr.call(value);
-		var isArgs = str === '[object Arguments]';
-		if (!isArgs) {
-			isArgs = str !== '[object Array]' &&
-				value !== null &&
-				typeof value === 'object' &&
-				typeof value.length === 'number' &&
-				value.length >= 0 &&
-				toStr.call(value.callee) === '[object Function]';
-		}
-		return isArgs;
-	};
-
-
-/***/ },
-/* 182 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */var keys = __webpack_require__(180);
-
-	module.exports = function hasSymbols() {
-		if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
-		if (typeof Symbol.iterator === 'symbol') { return true; }
-
-		var obj = {};
-		var sym = Symbol('test');
-		if (typeof sym === 'string') { return false; }
-		obj[sym] = 42;
-		for (sym in obj) { return false; }
-		if (keys(obj).length !== 0) { return false; }
-		if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
-
-		if (typeof Object.getOwnPropertyNames === 'function') {
-			var names = Object.getOwnPropertyNames(obj);
-			if (names.length !== 0) { return false; }
-		}
-
-		var syms = Object.getOwnPropertySymbols(obj);
-		if (syms.length !== 1 || syms[0] !== sym) { return false; }
-
-		if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
-
-		if (typeof Object.getOwnPropertyDescriptor === 'function') {
-			var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
-			if (descriptor.value !== 42 || descriptor.enumerable !== true) { return false; }
-		}
-
-		return true;
-	};
-
-
-/***/ },
-/* 183 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	var keys = __webpack_require__(180);
-	var foreach = __webpack_require__(184);
-
-	var toStr = Object.prototype.toString;
-
-	var isFunction = function (fn) {
-		return typeof fn === 'function' && toStr.call(fn) === '[object Function]';
-	};
-
-	var arePropertyDescriptorsSupported = function () {
-		var obj = {};
-		try {
-			Object.defineProperty(obj, 'x', { value: obj });
-			return obj.x === obj;
-		} catch (e) { /* this is IE 8. */
-			return false;
-		}
-	};
-	var supportsDescriptors = Object.defineProperty && arePropertyDescriptorsSupported();
-
-	var defineProperty = function (object, name, value, predicate) {
-		if (name in object && (!isFunction(predicate) || !predicate())) {
-			return;
-		}
-		if (supportsDescriptors) {
-			Object.defineProperty(object, name, {
-				configurable: true,
-				enumerable: false,
-				writable: true,
-				value: value
-			});
-		} else {
-			object[name] = value;
-		}
-	};
-
-	var defineProperties = function (object, map) {
-		var predicates = arguments.length > 2 ? arguments[2] : {};
-		foreach(keys(map), function (name) {
-			defineProperty(object, name, map[name], predicates[name]);
-		});
-	};
-
-	defineProperties.supportsDescriptors = !!supportsDescriptors;
-
-	module.exports = defineProperties;
-
-
-/***/ },
-/* 184 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */
-	var hasOwn = Object.prototype.hasOwnProperty;
-	var toString = Object.prototype.toString;
-
-	module.exports = function forEach (obj, fn, ctx) {
-	    if (toString.call(fn) !== '[object Function]') {
-	        throw new TypeError('iterator must be a function');
-	    }
-	    var l = obj.length;
-	    if (l === +l) {
-	        for (var i = 0; i < l; i++) {
-	            fn.call(ctx, obj[i], i, obj);
-	        }
-	    } else {
-	        for (var k in obj) {
-	            if (hasOwn.call(obj, k)) {
-	                fn.call(ctx, obj[k], k, obj);
-	            }
-	        }
-	    }
-	};
-
-
-
-/***/ },
-/* 185 */
+/* 186 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(process) {/** @jsx React.DOM */"use strict";
 
-	var URLPattern = __webpack_require__(186);
+	var URLPattern = __webpack_require__(187);
 	var invariant = __webpack_require__(7);
 	var React = __webpack_require__(177);
 	var cloneWithProps = __webpack_require__(165);
-	var assign = Object.assign || __webpack_require__(179);
+	var assign = Object.assign || __webpack_require__(178);
 
 	/**
 	 * Match routes against a path
@@ -23231,6 +23275,8 @@
 	 * @param {String} path
 	 */
 	function matchRoutes(routes, path) {
+	  var createCompiler = __webpack_require__(175).createURLPatternCompiler;
+
 	  var match, page, notFound;
 
 	  if (!Array.isArray(routes)) {
@@ -23245,12 +23291,11 @@
 	    if (process.env.NODE_ENV !== "production") {
 	      invariant(
 	        current.props.handler !== undefined && current.props.path !== undefined,
-	        "Router should contain either Route or NotFound components " +
-	        "as routes")
+	        "Router should contain either Route or NotFound components as routes");
 	    }
 
 	    if (current.props.path) {
-	      current.props.pattern = current.props.pattern || new URLPattern(current.props.path);
+	      current.props.pattern = current.props.pattern || new URLPattern(current.props.path, createCompiler(current.props));
 	      if (!page) {
 	        match = current.props.pattern.match(path);
 	        if (match) {
@@ -23330,19 +23375,19 @@
 	  // Passed a component descriptor - create an element. Assign it the ref
 	  // from the <Location> tag.
 	  return React.createElement(handler, props);
-	}
+	};
 
 	module.exports = matchRoutes;
 
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(3)))
 
 /***/ },
-/* 186 */
+/* 187 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/** @jsx React.DOM */// Generated by CoffeeScript 1.9.2
 	(function(root, factory) {
-	  if (('function' === "function") && (__webpack_require__(187) != null)) {
+	  if (('function' === "function") && (__webpack_require__(188) != null)) {
 	    return !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_FACTORY__ = (factory), __WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ? (__WEBPACK_AMD_DEFINE_FACTORY__.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__)) : __WEBPACK_AMD_DEFINE_FACTORY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	  } else if (typeof exports !== "undefined" && exports !== null) {
 	    return module.exports = factory();
@@ -23539,7 +23584,7 @@
 
 
 /***/ },
-/* 187 */
+/* 188 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {module.exports = __webpack_amd_options__;
@@ -23547,7 +23592,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, {}))
 
 /***/ },
-/* 188 */
+/* 189 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
@@ -23558,8 +23603,8 @@
 	 */
 
 	var ExecutionEnvironment  = __webpack_require__(54);
-	var DummyEnvironment      = __webpack_require__(189);
-	var Environment           = __webpack_require__(190);
+	var DummyEnvironment      = __webpack_require__(190);
+	var Environment           = __webpack_require__(191);
 
 	/**
 	 * Mixin for routes to keep attached to an environment.
@@ -23587,8 +23632,8 @@
 
 	if (ExecutionEnvironment.canUseDOM) {
 
-	  PathnameEnvironment = __webpack_require__(191);
-	  HashEnvironment     = __webpack_require__(192);
+	  PathnameEnvironment = __webpack_require__(192);
+	  HashEnvironment     = __webpack_require__(193);
 
 	  pathnameEnvironment = new PathnameEnvironment();
 	  hashEnvironment     = new HashEnvironment();
@@ -23621,12 +23666,12 @@
 
 
 /***/ },
-/* 189 */
+/* 190 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
-	var Environment   = __webpack_require__(190);
+	var Environment   = __webpack_require__(191);
 	var emptyFunction = __webpack_require__(19);
 
 	/**
@@ -23661,7 +23706,7 @@
 
 
 /***/ },
-/* 190 */
+/* 191 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
@@ -23704,15 +23749,15 @@
 	      this.routers[i].setPath(this.path, navigation, callback);
 	    }
 	  }.bind(this));
-	}
+	};
 
 	Environment.prototype.makeHref = function makeHref(path) {
 	  return path;
-	}
+	};
 
 	Environment.prototype.navigate = function navigate(path, navigation, cb) {
 	  return this.setPath(path, navigation, cb);
-	}
+	};
 
 	Environment.prototype.setPath = function(path, navigation, cb) {
 	  // Support (path, cb) arity.
@@ -23732,7 +23777,7 @@
 	  }
 	  this.path = path;
 	  this.notify(navigation, cb);
-	}
+	};
 
 	/**
 	 * Register router with an environment.
@@ -23745,7 +23790,7 @@
 	  if (router.getParentRouter === undefined || !router.getParentRouter()) {
 	    this.routers.push(router);
 	  }
-	}
+	};
 
 	/**
 	 * Unregister router from an environment.
@@ -23758,18 +23803,18 @@
 	  if (this.routers.length === 0) {
 	    this.stop();
 	  }
-	}
+	};
 
 	module.exports = Environment;
 
 
 /***/ },
-/* 191 */
+/* 192 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
-	var Environment = __webpack_require__(190);
+	var Environment = __webpack_require__(191);
 
 	/**
 	 * Routing environment which routes by `location.pathname`.
@@ -23787,7 +23832,7 @@
 
 	PathnameEnvironment.prototype.getPath = function() {
 	  return window.location.pathname;
-	}
+	};
 
 	PathnameEnvironment.prototype.pushState = function(path, navigation) {
 	  if (this.useHistoryApi) {
@@ -23795,7 +23840,7 @@
 	  } else {
 	    window.location.pathname = path;
 	  }
-	}
+	};
 
 	PathnameEnvironment.prototype.replaceState = function(path, navigation) {
 	  if (this.useHistoryApi) {
@@ -23803,7 +23848,7 @@
 	  } else {
 	    window.location.pathname = path;
 	  }
-	}
+	};
 
 	PathnameEnvironment.prototype.start = function() {
 	  if (this.useHistoryApi && window.addEventListener) {
@@ -23829,12 +23874,12 @@
 
 
 /***/ },
-/* 192 */
+/* 193 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
-	var Environment = __webpack_require__(190);
+	var Environment = __webpack_require__(191);
 
 	/**
 	 * Routing environment which routes by `location.hash`.
@@ -23853,12 +23898,12 @@
 
 	HashEnvironment.prototype.pushState = function(path, navigation) {
 	  window.location.hash = path;
-	}
+	};
 
 	HashEnvironment.prototype.replaceState = function(path, navigation) {
 	  var href = window.location.href.replace(/(javascript:|#).*$/, '');
 	  window.location.replace(href + '#' + path);
-	}
+	};
 
 	HashEnvironment.prototype.start = function() {
 	  if (window.addEventListener) {
@@ -23888,15 +23933,15 @@
 
 
 /***/ },
-/* 193 */
+/* 194 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
-	var assign              = Object.assign || __webpack_require__(179);
-	var prefetchAsyncState  = __webpack_require__(194);
-	var isAsyncComponent    = __webpack_require__(195);
-	var RouteRenderingMixin = __webpack_require__(196);
+	var assign              = Object.assign || __webpack_require__(178);
+	var prefetchAsyncState  = __webpack_require__(195);
+	var isAsyncComponent    = __webpack_require__(196);
+	var RouteRenderingMixin = __webpack_require__(176);
 
 	/**
 	 * Mixin for router components which prefetches state of async components
@@ -23909,7 +23954,7 @@
 	    var currentHandler = this.state && this.state.handler;
 	    var nextHandler = state && state.handler;
 
-	    if (nextHandler && nextHandler.type && 
+	    if (nextHandler && nextHandler.type &&
 	        isAsyncComponent(nextHandler) &&
 	        // if component's type is the same we would need to skip async state
 	        // update
@@ -23947,14 +23992,14 @@
 
 
 /***/ },
-/* 194 */
+/* 195 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
 
 	var invariant         = __webpack_require__(7);
 	var cloneWithProps    = __webpack_require__(165);
-	var isAsyncComponent  = __webpack_require__(195);
+	var isAsyncComponent  = __webpack_require__(196);
 
 	/**
 	 * Prefetch an async state for an unmounted async component instance.
@@ -23990,7 +24035,7 @@
 
 
 /***/ },
-/* 195 */
+/* 196 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict";
@@ -24005,37 +24050,6 @@
 	}
 
 	module.exports = isAsyncComponent;
-
-
-/***/ },
-/* 196 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */"use strict";
-
-	var React = __webpack_require__(177);
-	var cloneWithProps = __webpack_require__(165);
-	var assign = Object.assign || __webpack_require__(179);
-
-
-	/**
-	 * Mixin for routers which implements the simplest rendering strategy.
-	 */
-	var RouteRenderingMixin = {
-
-	  renderRouteHandler: function(props) {
-	    var handler = this.state.handler;
-	    props = assign({ref: this.state.match.route.ref}, props);
-	    // If we were passed an element, we need to clone it before passing it along.
-	    if (React.isValidElement(handler)) {
-	      return cloneWithProps(handler, props);
-	    }
-	    return React.createElement(handler, props);
-	  }
-
-	};
-
-	module.exports = RouteRenderingMixin;
 
 
 /***/ },
@@ -24101,8 +24115,8 @@
 
 	var React             = __webpack_require__(177);
 	var NavigatableMixin  = __webpack_require__(199);
-	var Environment       = __webpack_require__(188);
-	var assign            = Object.assign || __webpack_require__(179);
+	var Environment       = __webpack_require__(189);
+	var assign            = Object.assign || __webpack_require__(178);
 
 	/**
 	 * Link.
@@ -24191,7 +24205,7 @@
 	/** @jsx React.DOM */"use strict";
 
 	var React       = __webpack_require__(177);
-	var Environment = __webpack_require__(188);
+	var Environment = __webpack_require__(189);
 
 
 	/**
@@ -24237,8 +24251,8 @@
 
 	var React       = __webpack_require__(177);
 	var urllite     = __webpack_require__(201);
-	var Environment = __webpack_require__(188);
-	var assign      = Object.assign || __webpack_require__(179);
+	var Environment = __webpack_require__(189);
+	var assign      = Object.assign || __webpack_require__(178);
 
 	/**
 	 * A container component which captures <a> clicks and, if there's a matching
@@ -24300,7 +24314,7 @@
 
 	    // Ignore the click if it's a download link. (We use this method of
 	    // detecting the presence of the attribute for old IE versions.)
-	    if (!!el.attributes.download) {
+	    if (el.attributes.download) {
 	      return;
 	    }
 
@@ -33990,8 +34004,56 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
-	var Circle = __webpack_require__(212).Circle;
-	var ImageCrop = __webpack_require__(208);
+	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+	var Circle = __webpack_require__(208).Circle;
+	var ImageCrop = __webpack_require__(211);
+
+	var ReactTransitionGroup = React.addons.TransitionGroup;
+
+	var CallBackTransitionGroup = React.createClass({displayName: "CallBackTransitionGroup",
+
+		componentDidLeave : function(){
+			if(this.props.leaveCallback){
+				this.props.leaveCallback();
+			}
+		},
+
+		componentDidEnter : function(){
+			if(this.props.enterCallback){
+				this.props.enterCallback();
+			}
+		},
+
+		componentDidAppear : function(){
+			if(this.props.appearCallback){
+				this.props.appearCallback();
+			}
+		},
+
+		render : function() {
+			return(React.createElement(ReactTransitionGroup, {transitionName: this.props.transitionName}, 
+				this.props.children
+			))
+		}
+	})
+
+	var UploadRing = React.createClass({displayName: "UploadRing",
+		componentDidMount: function () {
+		    this.refs.circle.getDOMNode().addEventListener("transitionend", this.props.done, false);
+
+		},
+
+		render : function() {
+			return (React.createElement("div", {style: {textAlign:"center", width: "200px", display: "block", margin:"100px auto"}}, 
+				React.createElement(Circle, {ref: "circle", 
+					percent: this.props.progress, 
+					strokeWidth: "10"}
+				)
+				)
+			)
+		}
+	})
+
 
 	// # React.js AJAX Single File upload input
 
@@ -34017,7 +34079,6 @@
 		getInitialState: function () {
 			return {
 				file : {},
-				scale: 1,
 				status : ""
 			};
 		},
@@ -34042,8 +34103,6 @@
 		},
 
 		handleUpload : function(){
-			console.log(this.refs.caption.getDOMNode().value);
-
 			var payload = JSON.stringify({
 				dataSomething : this.refs.crop.getImage(),
 				caption : this.refs.caption.value
@@ -34054,32 +34113,25 @@
 			this.xhr.send(payload);
 		},
 
-		xhrUploadProgress : function(e){
+		uploadProgress : function(e){
 			this.setState({
 				progress : 	parseInt(e.loaded/e.total * 100),
-				isUploading : true
-			})
+				status : "uploading"
+			})			
+		},
+
+		uploadDone : function(e){
+			window.location.href="/";
 		},
 
 		componentDidMount: function () {
-			this.xhr.upload.addEventListener("progress", this.xhrUploadProgress, false)
-
-			// this.xhr.onload = function(){
-			// 	this.setState({status : "uploaded", fileId : this.xhr.response});
-			// }.bind(this);
+			this.xhr.upload.addEventListener("progress", this.uploadProgress, false);
 		},
 
 		componentDidUpdate: function (prevProps, prevState) {
-			switch (this.state.status){
-				case "loaded" :
-					break;
-				case "ready" : 
-					break;
-				case "uploaded" : 
-					// this.props.uploadedHandler(this.state.fileId);
-					break;
+			if (this.state.progress==100 && this.refs.circle) {
+				console.log("yay");
 			}
-				
 		},
 
 		render : function() {
@@ -34087,52 +34139,61 @@
 			var content;
 			if (this.state.status === "")
 
-				content = (React.createElement("div", {id: "file-upload", 
-								className: "file-upload", 
-								onClick: this.invokeFileInput}, 
-					this.props.children, 
-					React.createElement("input", {
-						ref: "fileInput", 
-						style: {display: "none"}, 
+				content = (
+					React.createElement("div", {	id: "file-upload", 
+							key: this.state.status, 
+							className: "file-upload", 
+							onClick: this.invokeFileInput}, 
+						this.props.children, 
+						React.createElement("input", {
+							ref: "fileInput", 
+							style: {display: "none"}, 
 
-						type: "file", 
-						accept: "image/*", 
-						capture: "camera", 
-						onChange: this.loadImage}
+							type: "file", 
+							accept: "image/*", 
+							capture: "camera", 
+							onChange: this.loadImage}
+						)
 					)
-				));
 
-			else if (this.state.status === "loaded"){
+				);
 
-				var UploadCircle;
-				if (this.state.isUploading){
-				    UploadCircle = (React.createElement("div", {style: {inline: "block", margin: "auto", "textAlign":"center", width:"200px"}}, 
-				    	React.createElement(Circle, {
-				    		percent: this.state.progress, 
-				    		strokeWidth: "6"}
-				    	)
-				    	));
+			else if (this.state.status === "loaded" || this.state.status=== "uploading"){
+
+				var UploadingComponent;
+				if(this.state.status=== "loaded"){
+					UploadingComponent = (React.createElement("div", {key: this.state.status}, 
+						React.createElement(ImageCrop, {
+							ref: "crop", 
+							image: this.state.data, 
+							width: screen.width - 60, 
+							height: screen.width - 60}
+						), 
+						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"}), 
+						React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Confirm!")
+					));
 				} else {
-					UploadCircle = React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Confirm!");
+					UploadingComponent = "";
+				}
+
+				var UploadingCircle;
+				if(this.state.status==="uploading"){
+					UploadingCircle=(React.createElement(UploadRing, {key: this.state.status, progress: this.state.progress, done: this.uploadDone}))
+				} else {
+					UploadingCircle="";
 				}
 
 				content = (React.createElement("div", null, 
-					React.createElement(ImageCrop, {
-						ref: "crop", 
-						image: this.state.data, 
-						width: screen.width - 60, 
-						height: screen.width - 60}
-					), 
-					React.createElement("br", null), 
-					React.createElement("div", null, 
-						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"}), 
-						UploadCircle
-					), 
-					React.createElement("br", null)
-				))
+						React.createElement(ReactCSSTransitionGroup, {transitionName: "moveUp"}, 
+							UploadingComponent
+						), 
+						React.createElement(CallBackTransitionGroup, {transitionName: "moveDown", transitionEnter: false}, 
+							UploadingCircle
+						)
+					)
+					)
 
-			}
-
+			} 
 			return content;
 		}
 	})
@@ -34141,6 +34202,156 @@
 
 /***/ },
 /* 208 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	module.exports = __webpack_require__(209);
+
+/***/ },
+/* 209 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var assign = __webpack_require__(210);
+	var React = __webpack_require__(177);
+	var defaultProps = {
+	  strokeWidth: 1,
+	  strokeColor: '#3FC7FA',
+	  trailWidth: 1,
+	  trailColor: '#D9D9D9'
+	};
+
+	var Line = React.createClass({
+	  displayName: 'Line',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var pathStyle = {
+	      'strokeDasharray': '100px, 100px',
+	      'strokeDashoffset': '' + (100 - props.percent) + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s linear'
+	    };
+
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (item === 'strokeWidth' && props.strokeWidth && (!parseFloat(props.strokeWidth) || parseFloat(props.strokeWidth) > 100 || parseFloat(props.strokeWidth) < 0)) {
+	        props[item] = defaultProps[item];
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    var strokeWidth = props.strokeWidth;
+	    var center = strokeWidth / 2;
+	    var right = 100 - strokeWidth / 2;
+	    var pathString = 'M ' + center + ',' + center + ' L ' + right + ',' + center;
+	    var viewBoxString = '0 0 100 ' + strokeWidth;
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-line', viewBox: viewBoxString, preserveAspectRatio: 'none' },
+	      React.createElement('path', { className: 'rc-progress-line-trail', d: pathString, strokeLinecap: 'round',
+	        stroke: props.trailColor, strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-line-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	var Circle = React.createClass({
+	  displayName: 'Circle',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var strokeWidth = props.strokeWidth;
+	    var radius = 50 - strokeWidth / 2;
+	    var pathString = 'M 50,50 m 0,-' + radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,' + 2 * radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,-' + 2 * radius;
+	    var len = Math.PI * 2 * radius;
+	    var pathStyle = {
+	      'strokeDasharray': '' + len + 'px ' + len + 'px',
+	      'strokeDashoffset': '' + (100 - props.percent) / 100 * len + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s ease'
+	    };
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-circle', viewBox: '0 0 100 100' },
+	      React.createElement('path', { className: 'rc-progress-circle-trail', d: pathString, stroke: props.trailColor,
+	        strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-circle-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	module.exports = {
+	  Line: Line,
+	  Circle: Circle
+	};
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function ToObject(val) {
+		if (val == null) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function ownEnumerableKeys(obj) {
+		var keys = Object.getOwnPropertyNames(obj);
+
+		if (Object.getOwnPropertySymbols) {
+			keys = keys.concat(Object.getOwnPropertySymbols(obj));
+		}
+
+		return keys.filter(function (key) {
+			return propIsEnumerable.call(obj, key);
+		});
+	}
+
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var keys;
+		var to = ToObject(target);
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = arguments[s];
+			keys = ownEnumerableKeys(Object(from));
+
+			for (var i = 0; i < keys.length; i++) {
+				to[keys[i]] = from[keys[i]];
+			}
+		}
+
+		return to;
+	};
+
+
+/***/ },
+/* 211 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/** @jsx React.DOM */"use strict"
@@ -34464,159 +34675,6 @@
 	});
 
 	module.exports = ImageCrop;
-
-/***/ },
-/* 209 */,
-/* 210 */,
-/* 211 */,
-/* 212 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	module.exports = __webpack_require__(213);
-
-/***/ },
-/* 213 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	var assign = __webpack_require__(214);
-	var React = __webpack_require__(177);
-	var defaultProps = {
-	  strokeWidth: 1,
-	  strokeColor: '#3FC7FA',
-	  trailWidth: 1,
-	  trailColor: '#D9D9D9'
-	};
-
-	var Line = React.createClass({
-	  displayName: 'Line',
-
-	  render: function render() {
-	    var props = assign({}, this.props);
-	    var pathStyle = {
-	      'strokeDasharray': '100px, 100px',
-	      'strokeDashoffset': '' + (100 - props.percent) + 'px',
-	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s linear'
-	    };
-
-	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
-	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
-	        props.trailWidth = props.strokeWidth;
-	        return;
-	      }
-	      if (item === 'strokeWidth' && props.strokeWidth && (!parseFloat(props.strokeWidth) || parseFloat(props.strokeWidth) > 100 || parseFloat(props.strokeWidth) < 0)) {
-	        props[item] = defaultProps[item];
-	        return;
-	      }
-	      if (!props[item]) {
-	        props[item] = defaultProps[item];
-	      }
-	    });
-
-	    var strokeWidth = props.strokeWidth;
-	    var center = strokeWidth / 2;
-	    var right = 100 - strokeWidth / 2;
-	    var pathString = 'M ' + center + ',' + center + ' L ' + right + ',' + center;
-	    var viewBoxString = '0 0 100 ' + strokeWidth;
-
-	    return React.createElement(
-	      'svg',
-	      { className: 'rc-progress-line', viewBox: viewBoxString, preserveAspectRatio: 'none' },
-	      React.createElement('path', { className: 'rc-progress-line-trail', d: pathString, strokeLinecap: 'round',
-	        stroke: props.trailColor, strokeWidth: props.trailWidth, fillOpacity: '0' }),
-	      React.createElement('path', { className: 'rc-progress-line-path', d: pathString, strokeLinecap: 'round',
-	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
-	    );
-	  }
-	});
-
-	var Circle = React.createClass({
-	  displayName: 'Circle',
-
-	  render: function render() {
-	    var props = assign({}, this.props);
-	    var strokeWidth = props.strokeWidth;
-	    var radius = 50 - strokeWidth / 2;
-	    var pathString = 'M 50,50 m 0,-' + radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,' + 2 * radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,-' + 2 * radius;
-	    var len = Math.PI * 2 * radius;
-	    var pathStyle = {
-	      'strokeDasharray': '' + len + 'px ' + len + 'px',
-	      'strokeDashoffset': '' + (100 - props.percent) / 100 * len + 'px',
-	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s ease'
-	    };
-	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
-	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
-	        props.trailWidth = props.strokeWidth;
-	        return;
-	      }
-	      if (!props[item]) {
-	        props[item] = defaultProps[item];
-	      }
-	    });
-
-	    return React.createElement(
-	      'svg',
-	      { className: 'rc-progress-circle', viewBox: '0 0 100 100' },
-	      React.createElement('path', { className: 'rc-progress-circle-trail', d: pathString, stroke: props.trailColor,
-	        strokeWidth: props.trailWidth, fillOpacity: '0' }),
-	      React.createElement('path', { className: 'rc-progress-circle-path', d: pathString, strokeLinecap: 'round',
-	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
-	    );
-	  }
-	});
-
-	module.exports = {
-	  Line: Line,
-	  Circle: Circle
-	};
-
-/***/ },
-/* 214 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-	function ToObject(val) {
-		if (val == null) {
-			throw new TypeError('Object.assign cannot be called with null or undefined');
-		}
-
-		return Object(val);
-	}
-
-	function ownEnumerableKeys(obj) {
-		var keys = Object.getOwnPropertyNames(obj);
-
-		if (Object.getOwnPropertySymbols) {
-			keys = keys.concat(Object.getOwnPropertySymbols(obj));
-		}
-
-		return keys.filter(function (key) {
-			return propIsEnumerable.call(obj, key);
-		});
-	}
-
-	module.exports = Object.assign || function (target, source) {
-		var from;
-		var keys;
-		var to = ToObject(target);
-
-		for (var s = 1; s < arguments.length; s++) {
-			from = arguments[s];
-			keys = ownEnumerableKeys(Object(from));
-
-			for (var i = 0; i < keys.length; i++) {
-				to[keys[i]] = from[keys[i]];
-			}
-		}
-
-		return to;
-	};
-
 
 /***/ }
 /******/ ]);

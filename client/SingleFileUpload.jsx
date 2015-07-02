@@ -1,7 +1,55 @@
 'use strict'
 var React = require('react/addons');
+var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
 var Circle = require('rc-progress').Circle;
 var ImageCrop = require("./ImageCrop.jsx");
+
+var ReactTransitionGroup = React.addons.TransitionGroup;
+
+var CallBackTransitionGroup = React.createClass({
+
+	componentDidLeave : function(){
+		if(this.props.leaveCallback){
+			this.props.leaveCallback();
+		}
+	},
+
+	componentDidEnter : function(){
+		if(this.props.enterCallback){
+			this.props.enterCallback();
+		}
+	},
+
+	componentDidAppear : function(){
+		if(this.props.appearCallback){
+			this.props.appearCallback();
+		}
+	},
+
+	render : function() {
+		return(<ReactTransitionGroup transitionName={this.props.transitionName}>
+			{this.props.children}
+		</ReactTransitionGroup>)
+	}
+})
+
+var UploadRing = React.createClass({
+	componentDidMount: function () {
+	    this.refs.circle.getDOMNode().addEventListener("transitionend", this.props.done, false);
+
+	},
+
+	render : function() {
+		return (<div style={{textAlign:"center", width: "200px", display: "block", margin:"100px auto"}}>
+			<Circle ref="circle"
+				percent={this.props.progress}
+				strokeWidth="10"
+			/>
+			</div>
+		)
+	}
+})
+
 
 // # React.js AJAX Single File upload input
 
@@ -27,7 +75,6 @@ var SingleFileUPload = React.createClass({
 	getInitialState: function () {
 		return {
 			file : {},
-			scale: 1,
 			status : ""
 		};
 	},
@@ -52,8 +99,6 @@ var SingleFileUPload = React.createClass({
 	},
 
 	handleUpload : function(){
-		console.log(this.refs.caption.getDOMNode().value);
-
 		var payload = JSON.stringify({
 			dataSomething : this.refs.crop.getImage(),
 			caption : this.refs.caption.value
@@ -64,32 +109,25 @@ var SingleFileUPload = React.createClass({
 		this.xhr.send(payload);
 	},
 
-	xhrUploadProgress : function(e){
+	uploadProgress : function(e){
 		this.setState({
 			progress : 	parseInt(e.loaded/e.total * 100),
-			isUploading : true
-		})
+			status : "uploading"
+		})			
+	},
+
+	uploadDone : function(e){
+		window.location.href="/";
 	},
 
 	componentDidMount: function () {
-		this.xhr.upload.addEventListener("progress", this.xhrUploadProgress, false)
-
-		// this.xhr.onload = function(){
-		// 	this.setState({status : "uploaded", fileId : this.xhr.response});
-		// }.bind(this);
+		this.xhr.upload.addEventListener("progress", this.uploadProgress, false);
 	},
 
 	componentDidUpdate: function (prevProps, prevState) {
-		switch (this.state.status){
-			case "loaded" :
-				break;
-			case "ready" : 
-				break;
-			case "uploaded" : 
-				// this.props.uploadedHandler(this.state.fileId);
-				break;
+		if (this.state.progress==100 && this.refs.circle) {
+			console.log("yay");
 		}
-			
 	},
 
 	render : function() {
@@ -97,52 +135,61 @@ var SingleFileUPload = React.createClass({
 		var content;
 		if (this.state.status === "")
 
-			content = (<div id="file-upload"
-							className="file-upload"
-							onClick={this.invokeFileInput}>
-				{this.props.children}
-				<input
-					ref="fileInput"
-					style={{display: "none"}}
+			content = (
+				<div 	id="file-upload"
+						key={this.state.status}
+						className="file-upload"
+						onClick={this.invokeFileInput}>
+					{this.props.children}
+					<input
+						ref="fileInput"
+						style={{display: "none"}}
 
-					type="file"
-					accept="image/*"
-					capture="camera"
-					onChange={this.loadImage}
-				/>
-			</div>);
+						type="file"
+						accept="image/*"
+						capture="camera"
+						onChange={this.loadImage}
+					/>
+				</div>
 
-		else if (this.state.status === "loaded"){
+			);
 
-			var UploadCircle;
-			if (this.state.isUploading){
-			    UploadCircle = (<div style={{inline: "block", margin: "auto", "textAlign":"center", width:"200px"}}>
-			    	<Circle
-			    		percent={this.state.progress}
-			    		strokeWidth="6"
-			    	/>
-			    	</div>);
+		else if (this.state.status === "loaded" || this.state.status=== "uploading"){
+
+			var UploadingComponent;
+			if(this.state.status=== "loaded"){
+				UploadingComponent = (<div key={this.state.status}>
+					<ImageCrop
+						ref="crop"
+						image={this.state.data}
+						width={screen.width - 60}
+						height={screen.width - 60}
+					/>
+					<textarea ref="caption" maxLength="60" className="caption" style={{width:window.innerWidth - 30}} placeholder="Place your caption here"/>
+					<button ref="confirmCrop" type="button" onClick={this.handleUpload}>Confirm!</button>
+				</div>);
 			} else {
-				UploadCircle = <button ref="confirmCrop" type="button" onClick={this.handleUpload}>Confirm!</button>;
+				UploadingComponent = "";
+			}
+
+			var UploadingCircle;
+			if(this.state.status==="uploading"){
+				UploadingCircle=(<UploadRing key={this.state.status} progress={this.state.progress} done={this.uploadDone}/>)
+			} else {
+				UploadingCircle="";
 			}
 
 			content = (<div>
-				<ImageCrop
-					ref="crop"
-					image={this.state.data}
-					width={screen.width - 60}
-					height={screen.width - 60}
-				/>
-				<br />
-				<div>
-					<textarea ref="caption" maxLength="60" className="caption" style={{width:window.innerWidth - 30}} placeholder="Place your caption here"/>
-					{UploadCircle}
+					<ReactCSSTransitionGroup transitionName="moveUp">
+						{UploadingComponent}
+					</ReactCSSTransitionGroup>
+					<CallBackTransitionGroup transitionName="moveDown" transitionEnter={false}>
+						{UploadingCircle}
+					</CallBackTransitionGroup>
 				</div>
-				<br />
-			</div>)
+				)
 
-		}
-
+		} 
 		return content;
 	}
 })
