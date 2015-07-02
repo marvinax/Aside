@@ -74,6 +74,6 @@ app.use(route.post("/upload", function *(){
 app.use(serve(path.join(__dirname, 'public/')));
 
 if (!module.parent) {
-	app.listen(3000);
-	console.log('listening on port 3000');
+	app.listen(80);
+	console.log('listening on port 80');
 }
