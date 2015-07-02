@@ -20,7 +20,8 @@
     "node-uuid": "^1.4.3",
     "rc-progress": "^1.0.3",
     "react-infinite-scroll": "^0.1.5",
-    "react-router-component": "^0.25.1"
+    "react-router-component": "^0.25.1",
+    "swig": "^1.4.2"
   },
   "devDependencies": {
     "jsx-loader": "^0.13.2",
