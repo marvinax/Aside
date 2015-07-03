@@ -7,7 +7,7 @@ var $ = require('jquery');
 var Entry = React.createClass({
 	getInitialState: function () {
 	    return {
-	        liked : false  
+	        liked : false
 	    };
 	},
 

@@ -39,6 +39,11 @@ app.use(route.get('/stats', function *(){
 	this.body = yield render('stats', {data : res});
 }));
 
+app.use(route.get('/older', function *(){
+	console.log(this.request.query);
+	this.body = "get it";
+}));
+
 app.use(route.get('/like', function *(){
 
 	docs.insert({

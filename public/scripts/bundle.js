@@ -24456,6 +24456,16 @@
 
 	var EntryHolder = React.createClass({displayName: "EntryHolder",
 
+		xhr : new XMLHttpRequest(),
+
+		componentDidMount: function () {
+			var that = this;
+		    this.xhr.onload = function(e){
+		    	console.log(this.responseText);
+		    	that.loadCallback();
+		    }
+		},	
+
 		_getRandomIndex : function(n){
 			return (Math.random()*(n-1)+1 | 0);
 		},
@@ -24467,22 +24477,25 @@
 			}.bind(this));
 		},
 
+		loadCallback : function(data){
+			var currentItems = this.state.items;
+				
+			for (var i = 0; i < 3; i++) {
+				currentItems.push(this._getRandomIndex(50));
+			}
+
+			this.setState({
+				items: currentItems,
+				isLoading: false,
+			});
+
+		},
+
 		_loadMoreItems: function() {
-			var itemsToAdd = 3;
-			var secondsToWait = 0.2;
 			this.setState({ isLoading: true });
-			// fake an async. ajax call with setTimeout
-			window.setTimeout(function() {
-				// add data
-				var currentItems = this.state.items;
-				for (var i = 0; i < itemsToAdd; i++) {
-					currentItems.push(this._getRandomIndex(50));
-				}
-				this.setState({
-					items: currentItems,
-					isLoading: false,
-				});
-			}.bind(this), secondsToWait * 1000);
+			this.xhr.open("GET", "/older?load=nothing", true);
+			// this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+			this.xhr.send();
 		},
 
 		/**
@@ -24558,7 +24571,7 @@
 	var Entry = React.createClass({displayName: "Entry",
 		getInitialState: function () {
 		    return {
-		        liked : false  
+		        liked : false
 		    };
 		},
 
