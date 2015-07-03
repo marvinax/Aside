@@ -1,5 +1,6 @@
 'use strict';
 
+var a = 5;
 // Koa fundamentals
 var compress = require('koa-compress');
 var logger = require('koa-logger');
@@ -22,12 +23,12 @@ var db = new loki('./data.json', {
 	autosave: true,
 	autosaveInterval: 5000,
 	autoload: true,
-	autoloadCallback : function(){
-		if (db.getCollection('docs') === null) {
-		db.addCollection('docs');
+	autoloadCallback : function(){	
+		if (db.collections === []) {
+			db.addCollection('docs');
 		}
  	}
- }),
+}),
 docs = db.getCollection('docs');
 
 
@@ -40,7 +41,7 @@ app.use(route.get('/stats', function *(){
 }));
 
 app.use(route.get('/older', function *(){
-	console.log(this.request.query);
+	console.log(docs);
 	this.body = "get it";
 }));
 
@@ -79,6 +80,7 @@ app.use(route.post("/upload", function *(){
 app.use(serve(path.join(__dirname, 'public/')));
 
 if (!module.parent) {
+	console.log(++a);
 	app.listen(80);
 	console.log('listening on port 80');
 }
