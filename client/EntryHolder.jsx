@@ -13,9 +13,8 @@ var EntryHolder = React.createClass({
 
 	componentDidMount: function () {
 		var that = this;
-	    this.xhr.onload = function(e){
-	    	console.log(this.responseText);
-	    	that.loadCallback();
+	    this.xhr.onload = function(){
+	    	that.downloadHandler(this);
 	    }
 	},	
 
@@ -30,12 +29,10 @@ var EntryHolder = React.createClass({
 		}.bind(this));
 	},
 
-	loadCallback : function(data){
+	downloadHandler : function(xhr){
 		var currentItems = this.state.items;
 			
-		for (var i = 0; i < 3; i++) {
-			currentItems.push(this._getRandomIndex(50));
-		}
+		currentItems.push(JSON.parse(xhr.response));
 
 		this.setState({
 			items: currentItems,
@@ -46,8 +43,7 @@ var EntryHolder = React.createClass({
 
 	_loadMoreItems: function() {
 		this.setState({ isLoading: true });
-		this.xhr.open("GET", "/older?load=nothing", true);
-		// this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+		this.xhr.open("GET", "/older?load="+this.state.items.length, true);
 		this.xhr.send();
 	},
 
@@ -55,7 +51,7 @@ var EntryHolder = React.createClass({
 	 * @return {Object}
 	 */
 	getInitialState: function() {
-		var initialItems = [1, 2, 5];
+		var initialItems = [];
 		return {
 			items: initialItems,
 			startingTime : Date.now(),
@@ -68,11 +64,12 @@ var EntryHolder = React.createClass({
 	 */
 	_renderItems: function() {
 		var that = this;
-		return this.state.items.map(function(imageIndex, index) {
+		return this.state.items.map(function(item, index) {
 			return (
 				<Entry
 					startingTime={this.state.startingTime}
-					imageIndex={imageIndex}
+					imageData={item.image}
+					imageIndex={item.$loki}
 					ref={"entry"+index}
 					key={index}
 					notifyParent={that.handleNotifyParent}

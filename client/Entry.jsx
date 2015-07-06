@@ -13,21 +13,19 @@ var Entry = React.createClass({
 
 	handleClick: function() {
 
-		$.getJSON("/like", {
-			index : this.props.imageIndex,
-			liked : this.state.liked,
-			time : Date.now(),
-			howLongStayed : Date.now() - this.props.startingTime
-		}, function(data){
-			this.props.notifyParent(this.props.imageIndex, this.state.liked, data.ok);
-		}.bind(this));
+		// $.getJSON("/like", {
+		// 	index : this.props.imageIndex,
+		// 	liked : this.state.liked,
+		// 	time : Date.now(),
+		// 	howLongStayed : Date.now() - this.props.startingTime
+		// }, function(data){
+		// 	this.props.notifyParent(this.props.imageIndex, this.state.liked, data.ok);
+		// }.bind(this));
 	},
 
 	render: function() {
 
 		var descBox = (this.state.liked) ? (<div className="descript-box"> Liked! </div>) : "";
-
-		var imageName = "./images/" + this.props.imageIndex + ".jpg";
 
 		return (
 			<div onClick={this.handleClick}>
@@ -36,7 +34,7 @@ var Entry = React.createClass({
 					{descBox}
 				</ReactCSSTransitionGroup>
 
-				<img className="user-image" src={imageName}/>
+				<img className="user-image" src={this.props.imageData}/>
 			</div>
 		);
 	}

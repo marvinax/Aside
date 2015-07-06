@@ -24460,9 +24460,8 @@
 
 		componentDidMount: function () {
 			var that = this;
-		    this.xhr.onload = function(e){
-		    	console.log(this.responseText);
-		    	that.loadCallback();
+		    this.xhr.onload = function(){
+		    	that.downloadHandler(this);
 		    }
 		},	
 
@@ -24477,12 +24476,10 @@
 			}.bind(this));
 		},
 
-		loadCallback : function(data){
+		downloadHandler : function(xhr){
 			var currentItems = this.state.items;
 				
-			for (var i = 0; i < 3; i++) {
-				currentItems.push(this._getRandomIndex(50));
-			}
+			currentItems.push(JSON.parse(xhr.response));
 
 			this.setState({
 				items: currentItems,
@@ -24493,8 +24490,7 @@
 
 		_loadMoreItems: function() {
 			this.setState({ isLoading: true });
-			this.xhr.open("GET", "/older?load=nothing", true);
-			// this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+			this.xhr.open("GET", "/older?load="+this.state.items.length, true);
 			this.xhr.send();
 		},
 
@@ -24502,7 +24498,7 @@
 		 * @return {Object}
 		 */
 		getInitialState: function() {
-			var initialItems = [1, 2, 5];
+			var initialItems = [];
 			return {
 				items: initialItems,
 				startingTime : Date.now(),
@@ -24515,11 +24511,12 @@
 		 */
 		_renderItems: function() {
 			var that = this;
-			return this.state.items.map(function(imageIndex, index) {
+			return this.state.items.map(function(item, index) {
 				return (
 					React.createElement(Entry, {
 						startingTime: this.state.startingTime, 
-						imageIndex: imageIndex, 
+						imageData: item.image, 
+						imageIndex: item.$loki, 
 						ref: "entry"+index, 
 						key: index, 
 						notifyParent: that.handleNotifyParent}
@@ -24577,21 +24574,19 @@
 
 		handleClick: function() {
 
-			$.getJSON("/like", {
-				index : this.props.imageIndex,
-				liked : this.state.liked,
-				time : Date.now(),
-				howLongStayed : Date.now() - this.props.startingTime
-			}, function(data){
-				this.props.notifyParent(this.props.imageIndex, this.state.liked, data.ok);
-			}.bind(this));
+			// $.getJSON("/like", {
+			// 	index : this.props.imageIndex,
+			// 	liked : this.state.liked,
+			// 	time : Date.now(),
+			// 	howLongStayed : Date.now() - this.props.startingTime
+			// }, function(data){
+			// 	this.props.notifyParent(this.props.imageIndex, this.state.liked, data.ok);
+			// }.bind(this));
 		},
 
 		render: function() {
 
 			var descBox = (this.state.liked) ? (React.createElement("div", {className: "descript-box"}, " Liked! ")) : "";
-
-			var imageName = "./images/" + this.props.imageIndex + ".jpg";
 
 			return (
 				React.createElement("div", {onClick: this.handleClick}, 
@@ -24600,7 +24595,7 @@
 						descBox
 					), 
 
-					React.createElement("img", {className: "user-image", src: imageName})
+					React.createElement("img", {className: "user-image", src: this.props.imageData})
 				)
 			);
 		}
