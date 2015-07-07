@@ -100,7 +100,7 @@ var SingleFileUPload = React.createClass({
 
 	handleUpload : function(){
 		var payload = JSON.stringify({
-			dataSomething : this.refs.crop.getImage(),
+			image : this.refs.crop.getImage(),
 			caption : this.refs.caption.value
 		});
 

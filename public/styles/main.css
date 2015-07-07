@@ -67,7 +67,7 @@ canvas, img {
 
 .descript-enter {
 	opacity: 0.1;
-	transition: opacity .15s ease;
+	transition: opacity .5s ease;
 }
 
 .descript-enter.descript-enter-active {
@@ -76,44 +76,10 @@ canvas, img {
 
 .descript-leave {
 	opacity: 0.6;
-	transition: opacity .15s ease;
+	transition: opacity .5s ease;
 }
 
 .descript-leave.descript-leave-active {
-	opacity : 0.1;
-}
-
-.liked-box {
-	text-align: center;
-
-	font-family: Seravek, sans-serif;
-	font-weight:Bold;
-	font-size: 6em;
-	letter-spacing: -0.04em;
-	background: #999;
-	color: #fff;
-
-	padding: 10px;
-	position: absolute;
-	display : inline-block;
-	opacity : 0.8;
-}
-
-.liked-enter {
-	opacity: 0.1;
-	transition: opacity .15s ease;
-}
-
-.liked-enter.liked-enter-active {
-	opacity : 0.8;
-}
-
-.liked-leave {
-	opacity: 0.8;
-	transition: opacity .15s ease;
-}
-
-.liked-leave.liked-leave-active {
 	opacity : 0.1;
 }
 
@@ -188,14 +154,8 @@ canvas, img {
 
 
 .button {
-	background-color: rgba(255, 255, 255, 0.85);
-	padding: 0.3em 0;
-
-	border-radius: 2em;
-
-	font-size: 3em;
 	position : fixed;
-	right : 5%;
+	right : 20%;
 	bottom :5%;
 }
 

@@ -40,9 +40,10 @@ app.use(route.get('/stats', function *(){
 	this.body = yield render('stats', {data : res});
 }));
 
-app.use(route.get('/older', function *(){
-	console.log(this.request.query);
-	this.body = docs.get(docs.maxId - parseInt(this.request.query.load));
+app.use(route.get('/loadmore', function *(){
+	var payload = docs.get(docs.maxId - parseInt(this.request.query.load));
+	console.log(Object.keys(payload));
+	this.body = payload;
 }));
 
 app.use(route.get('/like', function *(){
@@ -73,8 +74,12 @@ app.use(route.get('/', function *(){
 app.use(route.post("/upload", function *(){
 
 	var res = yield parse.json(this);
-	console.log(Object.keys(res));
-	this.body = "ok";
+
+	docs.insert({
+		image : res.image
+	})
+
+	this.body = {upload : "successfully"}
 }));
 
 app.use(serve(path.join(__dirname, 'public/')));

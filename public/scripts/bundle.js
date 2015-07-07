@@ -47,8 +47,8 @@
 	/** @jsx React.DOM */'use strict'
 	var React              = __webpack_require__(1);
 	var AnimatedLocations  = __webpack_require__(174);
-	var EntryHolder        = __webpack_require__(202);
-	var New                = __webpack_require__(206);
+	var EntryList          = __webpack_require__(202);
+	var New                = __webpack_require__(205);
 
 	var Router             = __webpack_require__(175);
 	var Locations 		   = Router.Locations;
@@ -59,7 +59,7 @@
 	  render: function() {
 	    return (
 	      React.createElement(AnimatedLocations, {hash: true, transitionName: "moveUp", popStateTransitionName: "fade"}, 
-	        React.createElement(Location, {path: "/", handler: EntryHolder}), 
+	        React.createElement(Location, {path: "/", handler: EntryList}), 
 	        React.createElement(Location, {path: "/new", handler: New})
 	      )
 	    )
@@ -24448,13 +24448,13 @@
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
 	var Entry = __webpack_require__(203);
-	var Waypoint = __webpack_require__(205);
+	var Waypoint = __webpack_require__(204);
 
 	var Router = __webpack_require__(175);
 	var Link = Router.Link;
 
 
-	var EntryHolder = React.createClass({displayName: "EntryHolder",
+	var EntryList = React.createClass({displayName: "EntryList",
 
 		xhr : new XMLHttpRequest(),
 
@@ -24490,7 +24490,7 @@
 
 		_loadMoreItems: function() {
 			this.setState({ isLoading: true });
-			this.xhr.open("GET", "/older?load="+this.state.items.length, true);
+			this.xhr.open("GET", "/loadmore?load="+this.state.items.length, true);
 			this.xhr.send();
 		},
 
@@ -24545,7 +24545,7 @@
 
 					React.createElement("div", {className: "button"}, 
 						React.createElement(Link, {href: "/new", transisionName: "moveUp"}, 
-							React.createElement("img", {width: "50%", src: "./icons/add.svg"})
+							React.createElement("img", {width: "300%", src: "./icons/add-3.svg"})
 						)
 					)
 				)
@@ -24553,7 +24553,7 @@
 		}
 	});
 
-	module.exports = EntryHolder;
+	module.exports = EntryList;
 
 /***/ },
 /* 203 */
@@ -24561,8 +24561,67 @@
 
 	/** @jsx React.DOM */'use strict'
 	var React = __webpack_require__(1);
+	// var Waypoint = require('react-waypoint');
 	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-	var $ = __webpack_require__(204);
+	var $ = __webpack_require__(211);
+
+	var ScreenWayPoint = React.createClass({displayName: "ScreenWayPoint",
+		getDefaultProps: function() {
+			return {
+				enterThres : 1,
+				leaveThres : 0,
+				onEnter: function() {},
+				onLeave: function() {},
+			};
+		},
+
+		componentDidMount: function() {
+			window.addEventListener('touchmove', this.handleScroll);
+			window.addEventListener('scroll', this.handleScroll);
+			this.handleScroll();
+		},
+
+		componentDidUpdate: function() {
+			this.handleScroll();
+		},
+
+		componentWillUnmount: function() {
+			window.removeEventListener('touchmove', this.handleScroll);
+			window.removeEventListener('scroll', this.handleScroll);
+		},
+
+		handleScroll: function(event) {
+			const isVisible = this.isVisible();
+
+			if (this.wasVisible === isVisible) {
+			  return;
+			}
+
+			if (isVisible) {
+			  this.props.onEnter.call(this, event);
+			} else {
+			  this.props.onLeave.call(this, event);
+			}
+
+			this.wasVisible = isVisible;
+		},
+
+		isVisible: function() {
+			const node = this.getDOMNode();
+
+			const enterThresPx = screen.height * this.props.enterThres;
+			const leaveThresPx = screen.height * this.props.leaveThres;
+
+			const isAboveBottom = node.offsetTop - window.scrollY <= enterThresPx;
+			const isBelowTop    = node.offsetTop - window.scrollY > leaveThresPx;
+
+			return isAboveBottom && isBelowTop;
+		},
+
+		render: function() {
+			return (React.createElement("span", {style: {fontSize: 0}}));
+		}
+	})
 
 
 	var Entry = React.createClass({displayName: "Entry",
@@ -24572,28 +24631,32 @@
 		    };
 		},
 
-		handleClick: function() {
+		componentWillUpdate: function (nextProps, nextState) {
+			var node = this.getDOMNode();
+		},
 
-			// $.getJSON("/like", {
-			// 	index : this.props.imageIndex,
-			// 	liked : this.state.liked,
-			// 	time : Date.now(),
-			// 	howLongStayed : Date.now() - this.props.startingTime
-			// }, function(data){
-			// 	this.props.notifyParent(this.props.imageIndex, this.state.liked, data.ok);
-			// }.bind(this));
+		displayButton: function () {
+			this.setState({liked:true});
+		},
+
+		hideButton : function() {
+			this.setState({liked:false});
+		},
+
+		handleClick: function() {
 		},
 
 		render: function() {
 
-			var descBox = (this.state.liked) ? (React.createElement("div", {className: "descript-box"}, " Liked! ")) : "";
+			var descBox = (this.state.liked) ? (React.createElement("div", {key: "desc"+this.props.key, className: "descript-box"}, " Liked! ")) : "";
 
 			return (
-				React.createElement("div", {onClick: this.handleClick}, 
-
+				React.createElement("div", null, 
+					React.createElement(ScreenWayPoint, {enterThres: 0.5, leaveThres: 0.1, onEnter: this.displayButton, onLeave: this.hideButton}), 
 					React.createElement(ReactCSSTransitionGroup, {transitionName: "descript"}, 
 						descBox
 					), 
+
 
 					React.createElement("img", {className: "user-image", src: this.props.imageData})
 				)
@@ -24605,6 +24668,871 @@
 
 /***/ },
 /* 204 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var React = __webpack_require__(177);
+
+	var PropTypes = React.PropTypes;
+
+	/**
+	 * Calls a function when you scroll to the element.
+	 */
+	var Waypoint = React.createClass({
+	  displayName: 'Waypoint',
+
+	  propTypes: {
+	    onEnter: PropTypes.func,
+	    onLeave: PropTypes.func,
+	    // threshold is percentage of the height of the visible part of the
+	    // scrollable parent (e.g. 0.1)
+	    threshold: PropTypes.number },
+
+	  _wasVisible: false,
+
+	  /**
+	   * @return {Object}
+	   */
+	  getDefaultProps: function getDefaultProps() {
+	    return {
+	      threshold: 0,
+	      onEnter: function onEnter() {},
+	      onLeave: function onLeave() {} };
+	  },
+
+	  componentDidMount: function componentDidMount() {
+	    this.scrollableParent = this._findScrollableParent();
+	    this.scrollableParent.addEventListener('scroll', this._handleScroll);
+	    window.addEventListener('resize', this._handleScroll);
+	    this._handleScroll();
+	  },
+
+	  componentDidUpdate: function componentDidUpdate() {
+	    // The element may have moved.
+	    this._handleScroll();
+	  },
+
+	  componentWillUnmount: function componentWillUnmount() {
+	    if (this.scrollableParent) {
+	      // At the time of unmounting, the scrollable parent might no longer exist.
+	      // Guarding against this prevents the following error:
+	      //
+	      //   Cannot read property 'removeEventListener' of undefined
+	      this.scrollableParent.removeEventListener('scroll', this._handleScroll);
+	      window.removeEventListener('resize', this._handleScroll);
+	    }
+	  },
+
+	  /**
+	   * Traverses up the DOM to find a parent container which has an overflow style
+	   * that allows for scrolling.
+	   *
+	   * @return {Object} the closest parent element with an overflow style that
+	   *   allows for scrolling. If none is found, the `window` object is returned
+	   *   as a fallback.
+	   */
+	  _findScrollableParent: function _findScrollableParent() {
+	    var node = this.getDOMNode();
+
+	    while (node.parentNode) {
+	      node = node.parentNode;
+
+	      if (node === document) {
+	        // This particular node does not have a computed style.
+	        continue;
+	      }
+
+	      var _style = window.getComputedStyle(node);
+	      var overflowY = _style.getPropertyValue('overflow-y') || _style.getPropertyValue('overflow');
+
+	      if (overflowY === 'auto' || overflowY === 'scroll') {
+	        return node;
+	      }
+	    }
+
+	    // A scrollable parent element was not found, which means that we need to do
+	    // stuff on window.
+	    return window;
+	  },
+
+	  _handleScroll: function _handleScroll() {
+	    var isVisible = this._isVisible();
+
+	    if (this._wasVisible === isVisible) {
+	      // No change since last trigger
+	      return;
+	    }
+
+	    if (isVisible) {
+	      this.props.onEnter();
+	    } else {
+	      this.props.onLeave();
+	    }
+
+	    this._wasVisible = isVisible;
+	  },
+
+	  /**
+	   * @param {Object} node
+	   * @return {Number}
+	   */
+	  _distanceToTopOfScrollableParent: function _distanceToTopOfScrollableParent(node) {
+	    if (this.scrollableParent !== window && !node.offsetParent) {
+	      throw new Error('The scrollable parent of Waypoint needs to have positioning to ' + 'properly determine position of Waypoint (e.g. `position: relative;`)');
+	    }
+
+	    if (node.offsetParent === this.scrollableParent || !node.offsetParent) {
+	      return node.offsetTop;
+	    } else {
+	      return node.offsetTop + this._distanceToTopOfScrollableParent(node.offsetParent);
+	    }
+	  },
+
+	  /**
+	   * @return {boolean} true if scrolled down almost to the end of the scrollable
+	   *   parent element.
+	   */
+	  _isVisible: function _isVisible() {
+	    var waypointTop = this._distanceToTopOfScrollableParent(this.getDOMNode());
+	    var contextHeight = undefined,
+	        contextScrollTop = undefined;
+
+	    if (this.scrollableParent === window) {
+	      contextHeight = window.innerHeight;
+	      contextScrollTop = window.pageYOffset;
+	    } else {
+	      contextHeight = this.scrollableParent.offsetHeight;
+	      contextScrollTop = this.scrollableParent.scrollTop;
+	    }
+
+	    var thresholdPx = contextHeight * this.props.threshold;
+
+	    var isAboveBottom = contextScrollTop + contextHeight >= waypointTop - thresholdPx;
+	    var isBelowTop = contextScrollTop <= waypointTop + thresholdPx;
+
+	    return isAboveBottom && isBelowTop;
+	  },
+
+	  /**
+	   * @return {Object}
+	   */
+	  render: function render() {
+	    // We need an element that we can locate in the DOM to determine where it is
+	    // rendered relative to the top of its context.
+	    return React.createElement('span', { style: { fontSize: 0 } });
+	  }
+	});
+
+	module.exports = Waypoint;
+
+
+/***/ },
+/* 205 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict'
+	var React = __webpack_require__(1);
+	var SingleFileUpload = __webpack_require__(206)
+	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+
+	var New = React.createClass({displayName: "New",
+
+		render : function(){
+			return (
+				React.createElement("div", {className: "caption-container"}, 
+					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"}, 
+						React.createElement("img", {src: "./icons/upload.svg", width: "80%"}), 
+						React.createElement("br", null), 
+						"点这儿上传"
+					)
+				)
+			);
+		}
+	})
+
+	module.exports = New;
+
+/***/ },
+/* 206 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict'
+	var React = __webpack_require__(1);
+	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+	var Circle = __webpack_require__(207).Circle;
+	var ImageCrop = __webpack_require__(210);
+
+	var ReactTransitionGroup = React.addons.TransitionGroup;
+
+	var CallBackTransitionGroup = React.createClass({displayName: "CallBackTransitionGroup",
+
+		componentDidLeave : function(){
+			if(this.props.leaveCallback){
+				this.props.leaveCallback();
+			}
+		},
+
+		componentDidEnter : function(){
+			if(this.props.enterCallback){
+				this.props.enterCallback();
+			}
+		},
+
+		componentDidAppear : function(){
+			if(this.props.appearCallback){
+				this.props.appearCallback();
+			}
+		},
+
+		render : function() {
+			return(React.createElement(ReactTransitionGroup, {transitionName: this.props.transitionName}, 
+				this.props.children
+			))
+		}
+	})
+
+	var UploadRing = React.createClass({displayName: "UploadRing",
+		componentDidMount: function () {
+		    this.refs.circle.getDOMNode().addEventListener("transitionend", this.props.done, false);
+
+		},
+
+		render : function() {
+			return (React.createElement("div", {style: {textAlign:"center", width: "200px", display: "block", margin:"100px auto"}}, 
+				React.createElement(Circle, {ref: "circle", 
+					percent: this.props.progress, 
+					strokeWidth: "10"}
+				)
+				)
+			)
+		}
+	})
+
+
+	// # React.js AJAX Single File upload input
+
+	// A React.js Component that demonstrates how to integrate
+	// with Ajax behavior. For single file uploading, you could
+	// get rid of importing jQuery. You can also write your own
+	// component that exhcange JSON information by mimicking this
+	// piece of code.
+
+	// The current implementation is a single file input, which
+	// is set to hidden and invoked from outside. And also you need
+	// to specify the callback which runs after uploaded.
+
+	// Marvin Yue Tao
+	// June 20, 2015
+
+	var SingleFileUPload = React.createClass({displayName: "SingleFileUPload",
+
+		// the default props contain the XHR object which handles 
+		// everything about transmission. 
+		xhr : new XMLHttpRequest(),
+
+		getInitialState: function () {
+			return {
+				file : {},
+				status : ""
+			};
+		},
+
+		invokeFileInput : function() {
+			this.refs.fileInput.getDOMNode().click();
+		},
+
+		loadImage : function(e) {
+			var self = this;
+			var reader = new FileReader();
+			var file = e.target.files[0];
+
+			reader.onload = function(upload) {
+				self.setState({
+					data: upload.target.result,
+					status : "loaded"
+				});
+			}
+
+			reader.readAsDataURL(file);
+		},
+
+		handleUpload : function(){
+			var payload = JSON.stringify({
+				image : this.refs.crop.getImage(),
+				caption : this.refs.caption.value
+			});
+
+			this.xhr.open("POST", this.props.remoteHandler);
+			this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+			this.xhr.send(payload);
+		},
+
+		uploadProgress : function(e){
+			this.setState({
+				progress : 	parseInt(e.loaded/e.total * 100),
+				status : "uploading"
+			})			
+		},
+
+		uploadDone : function(e){
+			window.location.href="/";
+		},
+
+		componentDidMount: function () {
+			this.xhr.upload.addEventListener("progress", this.uploadProgress, false);
+		},
+
+		componentDidUpdate: function (prevProps, prevState) {
+			if (this.state.progress==100 && this.refs.circle) {
+				console.log("yay");
+			}
+		},
+
+		render : function() {
+
+			var content;
+			if (this.state.status === "")
+
+				content = (
+					React.createElement("div", {	id: "file-upload", 
+							key: this.state.status, 
+							className: "file-upload", 
+							onClick: this.invokeFileInput}, 
+						this.props.children, 
+						React.createElement("input", {
+							ref: "fileInput", 
+							style: {display: "none"}, 
+
+							type: "file", 
+							accept: "image/*", 
+							capture: "camera", 
+							onChange: this.loadImage}
+						)
+					)
+
+				);
+
+			else if (this.state.status === "loaded" || this.state.status=== "uploading"){
+
+				var UploadingComponent;
+				if(this.state.status=== "loaded"){
+					UploadingComponent = (React.createElement("div", {key: this.state.status}, 
+						React.createElement(ImageCrop, {
+							ref: "crop", 
+							image: this.state.data, 
+							width: screen.width - 60, 
+							height: screen.width - 60}
+						), 
+						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"}), 
+						React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Confirm!")
+					));
+				} else {
+					UploadingComponent = "";
+				}
+
+				var UploadingCircle;
+				if(this.state.status==="uploading"){
+					UploadingCircle=(React.createElement(UploadRing, {key: this.state.status, progress: this.state.progress, done: this.uploadDone}))
+				} else {
+					UploadingCircle="";
+				}
+
+				content = (React.createElement("div", null, 
+						React.createElement(ReactCSSTransitionGroup, {transitionName: "moveUp"}, 
+							UploadingComponent
+						), 
+						React.createElement(CallBackTransitionGroup, {transitionName: "moveDown", transitionEnter: false}, 
+							UploadingCircle
+						)
+					)
+					)
+
+			} 
+			return content;
+		}
+	})
+
+	module.exports = SingleFileUPload;
+
+/***/ },
+/* 207 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	module.exports = __webpack_require__(208);
+
+/***/ },
+/* 208 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+
+	var assign = __webpack_require__(209);
+	var React = __webpack_require__(177);
+	var defaultProps = {
+	  strokeWidth: 1,
+	  strokeColor: '#3FC7FA',
+	  trailWidth: 1,
+	  trailColor: '#D9D9D9'
+	};
+
+	var Line = React.createClass({
+	  displayName: 'Line',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var pathStyle = {
+	      'strokeDasharray': '100px, 100px',
+	      'strokeDashoffset': '' + (100 - props.percent) + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s linear'
+	    };
+
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (item === 'strokeWidth' && props.strokeWidth && (!parseFloat(props.strokeWidth) || parseFloat(props.strokeWidth) > 100 || parseFloat(props.strokeWidth) < 0)) {
+	        props[item] = defaultProps[item];
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    var strokeWidth = props.strokeWidth;
+	    var center = strokeWidth / 2;
+	    var right = 100 - strokeWidth / 2;
+	    var pathString = 'M ' + center + ',' + center + ' L ' + right + ',' + center;
+	    var viewBoxString = '0 0 100 ' + strokeWidth;
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-line', viewBox: viewBoxString, preserveAspectRatio: 'none' },
+	      React.createElement('path', { className: 'rc-progress-line-trail', d: pathString, strokeLinecap: 'round',
+	        stroke: props.trailColor, strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-line-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	var Circle = React.createClass({
+	  displayName: 'Circle',
+
+	  render: function render() {
+	    var props = assign({}, this.props);
+	    var strokeWidth = props.strokeWidth;
+	    var radius = 50 - strokeWidth / 2;
+	    var pathString = 'M 50,50 m 0,-' + radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,' + 2 * radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,-' + 2 * radius;
+	    var len = Math.PI * 2 * radius;
+	    var pathStyle = {
+	      'strokeDasharray': '' + len + 'px ' + len + 'px',
+	      'strokeDashoffset': '' + (100 - props.percent) / 100 * len + 'px',
+	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s ease'
+	    };
+	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
+	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
+	        props.trailWidth = props.strokeWidth;
+	        return;
+	      }
+	      if (!props[item]) {
+	        props[item] = defaultProps[item];
+	      }
+	    });
+
+	    return React.createElement(
+	      'svg',
+	      { className: 'rc-progress-circle', viewBox: '0 0 100 100' },
+	      React.createElement('path', { className: 'rc-progress-circle-trail', d: pathString, stroke: props.trailColor,
+	        strokeWidth: props.trailWidth, fillOpacity: '0' }),
+	      React.createElement('path', { className: 'rc-progress-circle-path', d: pathString, strokeLinecap: 'round',
+	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
+	    );
+	  }
+	});
+
+	module.exports = {
+	  Line: Line,
+	  Circle: Circle
+	};
+
+/***/ },
+/* 209 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */'use strict';
+	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	function ToObject(val) {
+		if (val == null) {
+			throw new TypeError('Object.assign cannot be called with null or undefined');
+		}
+
+		return Object(val);
+	}
+
+	function ownEnumerableKeys(obj) {
+		var keys = Object.getOwnPropertyNames(obj);
+
+		if (Object.getOwnPropertySymbols) {
+			keys = keys.concat(Object.getOwnPropertySymbols(obj));
+		}
+
+		return keys.filter(function (key) {
+			return propIsEnumerable.call(obj, key);
+		});
+	}
+
+	module.exports = Object.assign || function (target, source) {
+		var from;
+		var keys;
+		var to = ToObject(target);
+
+		for (var s = 1; s < arguments.length; s++) {
+			from = arguments[s];
+			keys = ownEnumerableKeys(Object(from));
+
+			for (var i = 0; i < keys.length; i++) {
+				to[keys[i]] = from[keys[i]];
+			}
+		}
+
+		return to;
+	};
+
+
+/***/ },
+/* 210 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/** @jsx React.DOM */"use strict"
+	var React = __webpack_require__(177);
+
+	var deviceEvents = {
+	    down: 'onTouchStart',
+	    move: 'onTouchMove',
+	    up: 'onTouchUp'
+	};
+
+	var ImageCrop = React.createClass({displayName: "ImageCrop",
+
+	    getDefaultProps: function() {
+	        return {
+	            border: 25,
+	            width: 200,
+	            height: 200,
+	            color: [0, 0, 0, 0.5],
+	            onImageReady:function() {},
+	        }
+	    },
+
+	    getInitialState: function() {
+	        return {
+	            drag: false,
+	            pinch: false,
+	            mouseY: null,
+	            mouseX: null,
+	            scale: 1,
+	            image: {
+	                x: 0,
+	                y: 0
+	            },
+	            canvas: {
+	                width: this.props.width + (this.props.border * 2),
+	                height: this.props.height + (this.props.border * 2)
+	            }
+	        };
+	    },
+
+	    getImage: function() {
+	        var newCanvas = document.createElement('canvas');
+	        var context = newCanvas.getContext('2d');
+
+	        newCanvas.width = this.props.width;
+	        newCanvas.height = this.props.height;
+
+	        this.setCanvasResolution(newCanvas);
+
+	        var imageState = this.state.image;
+
+	        this.paintImage(context, {
+	            resource: imageState.resource,
+	            x: imageState.x - this.props.border,
+	            y: imageState.y - this.props.border,
+	            width: imageState.width,
+	            height: imageState.height
+	        });
+
+	        return newCanvas.toDataURL("image/jpeg", 1);
+	    },
+
+	    isDataURL: function(str) {
+	        var regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
+	        return !!str.match(regex);
+	    },
+
+	    loadImage: function(imageURL) {
+	        var imageObj = new Image();
+	        imageObj.onload = this.handleImageReady.bind(this, imageObj);
+	        if (!this.isDataURL(imageURL)) imageObj.crossOrigin = 'anonymous';
+	        imageObj.src = imageURL;
+	    },
+
+	    setCanvasResolution: function(canvas) {
+	        var context = canvas.getContext('2d');
+
+	        var devicePixelRatio = window.devicePixelRatio || 1;
+
+	        if (true) {
+
+	            var oldWidth = canvas.width;
+	            var oldHeight = canvas.height;
+
+	            canvas.width = oldWidth * devicePixelRatio;
+	            canvas.height = oldHeight * devicePixelRatio;
+
+	            canvas.style.width = oldWidth + 'px';
+	            canvas.style.height = oldHeight + 'px';
+
+	            context.scale(devicePixelRatio, devicePixelRatio);
+	        }
+
+	    },
+
+	    componentDidMount: function() {
+	        var canvas = this.getDOMNode();
+	        var context = canvas.getContext('2d');
+	        this.setCanvasResolution(canvas);
+
+	        if (this.props.image) {
+	            this.loadImage(this.props.image);
+	        }
+	        this.paint(context);
+	        React.initializeTouchEvents(true);
+	    },
+
+	    componentWillUnmount: function() {
+	    },
+
+	    componentDidUpdate: function() {
+	        var context = this.getDOMNode().getContext('2d');
+	        context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
+	        this.paintImage(context, this.state.image);
+	        this.paint(context);
+	    },
+
+	    handleImageReady: function(image) {
+	        var imageState = this.getInitialSize(image.width, image.height);
+	        imageState.resource = image;
+	        imageState.x = this.props.border;
+	        imageState.y = this.props.border;
+	        this.setState({drag: false, pinch: false, image: imageState}, this.props.onImageReady);
+	    },
+
+	    getInitialSize: function(width, height) {
+	        var newHeight, newWidth, dimensions, canvasRatio, imageRatio;
+
+	        canvasRatio = this.props.height / this.props.width;
+	        imageRatio = height / width;
+
+	        if (canvasRatio > imageRatio) {
+	            newHeight = (this.props.height);
+	            newWidth = (width * (newHeight / height));
+	        } else {
+	            newWidth = (this.props.width);
+	            newHeight = (height * (newWidth / width));
+	        }
+
+	        return {
+	            height: newHeight,
+	            width: newWidth
+	        };
+	    },
+
+	    componentWillReceiveProps: function(newProps) {
+	        if (this.props.image != newProps.image) {
+	            this.loadImage(newProps.image);
+	        }
+	        if (this.state.scale != newProps.scale) {
+	            this.squeeze(newProps);
+	        }
+	    },
+
+	    paintImage: function(context, image) {
+	        if (image.resource) {
+	            context.save();
+	            context.globalCompositeOperation = 'destination-over';
+	            context.drawImage(image.resource, image.x, image.y,
+	                image.width * this.state.scale, image.height * this.state.scale);
+
+	            context.restore();
+	        }
+	    },
+
+	    paint: function(context) {
+	        context.save();
+	        context.translate(0, 0);
+	        context.fillStyle = "rgba(0,0,0,0.5)";
+
+	        var borderSize = this.props.border;
+	        var height = this.state.canvas.height;
+	        var width = this.state.canvas.width;
+
+	        context.fillRect(0, 0, width, borderSize); // top
+	        context.fillRect(0, height - borderSize, width, borderSize); // bottom
+	        context.fillRect(0, borderSize, borderSize, height - (borderSize * 2)); // left
+	        context.fillRect(width - borderSize, borderSize, borderSize, height - (borderSize * 2)); // right
+
+	        context.restore();
+	    },
+
+	    handleCursorDown: function(e) {
+	        e.preventDefault();
+	         
+	        if (event.targetTouches.length === 1)
+	            this.setState({
+	                drag: true,
+	                pinch : false,
+	                mouseX: null,
+	                mouseY: null
+	            });
+	        else if (event.targetTouches.length === 2){
+	            this.lastZoomScale = undefined;
+	            this.setState({
+	                drag: false,
+	                pinch : true,
+	                mouseX: null,
+	                mouseY: null
+	            })            
+	        }
+	    },
+
+	    handleCursorUp: function() {
+
+	        if (this.state.drag) {
+	            this.setState({drag: false});
+	        }
+	        if (this.state.pinch) {
+	            this.setState({pinch: false});
+	        }
+	    },
+
+	    handleCursorMove: function(e) {
+	        if (this.state.drag) {
+	            this.handleDrag();
+	        } if (this.state.pinch) {
+	            this.handleZoom(this.handlePinch());
+	        }
+	    },
+
+	    handlePinch: function(){
+	        
+	        var zoom = false;
+
+	        var p1 = event.targetTouches[0];
+	        var p2 = event.targetTouches[1];
+	        if(p1 && p2){
+	            var zoomScale = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2)); //euclidian distance
+
+	            if( this.lastZoomScale ) {
+	                zoom = {
+	                    scale : zoomScale - this.lastZoomScale,
+	                    center : {x: (p1.pageX + p2.pageX)/2, y : (p1.pageY + p2.pageY)/2}
+	                };
+	            }
+
+	            this.lastZoomScale = zoomScale;            
+	        }
+
+	        return zoom;
+	    },
+
+	    handleZoom: function(zoom){
+	        if (!zoom) {
+	            return;
+	        }
+
+	        var newScale = Math.max(1, this.state.scale + zoom.scale/100);
+	        
+	        var canvasmiddleX = this.state.canvas.width / 2;
+	        var canvasmiddleY = this.state.canvas.height / 2;
+
+	        var ratio = (newScale / this.state.scale - 1);
+	        var newPosX = this.state.image.x + ratio * (this.state.image.x - canvasmiddleX);
+	        var newPosY = this.state.image.y + ratio *(this.state.image.y - canvasmiddleY);
+
+	        
+	        this.setState({
+	            scale : newScale,
+	            image: {
+	                resource : this.state.image.resource,
+	                x: Math.min(newPosX, this.props.border),
+	                y: Math.min(newPosY, this.props.border),
+	                width: this.state.image.width,
+	                height: this.state.image.height
+	            }
+	        })
+	    },
+
+	    handleDrag: function(){
+	        var imageState = this.state.image;
+	        var lastX = imageState.x;
+	        var lastY = imageState.y;
+
+	        var mousePositionX = event.targetTouches[0].pageX;
+	        var mousePositionY = event.targetTouches[0].pageY;
+
+	        var newState = { mouseX: mousePositionX, mouseY: mousePositionY, image: imageState };
+
+	        if (this.state.mouseX && this.state.mouseY) {
+	            var xDiff = this.state.mouseX - mousePositionX;
+	            var yDiff = this.state.mouseY - mousePositionY;
+
+	            imageState.y = this.getBound(lastY - yDiff, "height", this.state.image);
+	            imageState.x = this.getBound(lastX - xDiff, "width", this.state.image);
+	        }
+
+	        this.setState(newState);
+	    },
+
+	    squeeze: function(props) {
+	        var imageState = this.state.image;
+	            imageState.y = this.getBound(imageState.y, "height", this.state.image);
+	            imageState.x = this.getBound(imageState.x, "width", this.state.image);
+	        this.setState({ image: imageState });
+	    },
+
+	    getBound: function(axis, dim, img){
+
+	        var diff = Math.ceil((img[dim] * this.state.scale - img[dim])/2) + this.props.border;
+	        var bound = Math.ceil(-img[dim] * this.state.scale + this.props.width + this.props.border);
+
+	        return Math.min(Math.min(Math.max(axis, bound), this.props.border), diff);
+	    },
+
+	    render: function() {
+	        var attributes = {
+	            width: this.props.width + (this.props.border * 2),
+	            height: this.props.height + (this.props.border * 2)
+	        };
+
+	        attributes[deviceEvents.down] = this.handleCursorDown;
+	        attributes[deviceEvents.move] = this.handleCursorMove;
+	        attributes[deviceEvents.up] = this.handleCursorUp;
+
+	        return React.createElement("canvas", React.__spread({},  attributes));
+	    }
+
+	});
+
+	module.exports = ImageCrop;
+
+/***/ },
+/* 211 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/** @jsx React.DOM *//*!
@@ -33818,871 +34746,6 @@
 
 	}));
 
-
-/***/ },
-/* 205 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	var React = __webpack_require__(177);
-
-	var PropTypes = React.PropTypes;
-
-	/**
-	 * Calls a function when you scroll to the element.
-	 */
-	var Waypoint = React.createClass({
-	  displayName: 'Waypoint',
-
-	  propTypes: {
-	    onEnter: PropTypes.func,
-	    onLeave: PropTypes.func,
-	    // threshold is percentage of the height of the visible part of the
-	    // scrollable parent (e.g. 0.1)
-	    threshold: PropTypes.number },
-
-	  _wasVisible: false,
-
-	  /**
-	   * @return {Object}
-	   */
-	  getDefaultProps: function getDefaultProps() {
-	    return {
-	      threshold: 0,
-	      onEnter: function onEnter() {},
-	      onLeave: function onLeave() {} };
-	  },
-
-	  componentDidMount: function componentDidMount() {
-	    this.scrollableParent = this._findScrollableParent();
-	    this.scrollableParent.addEventListener('scroll', this._handleScroll);
-	    window.addEventListener('resize', this._handleScroll);
-	    this._handleScroll();
-	  },
-
-	  componentDidUpdate: function componentDidUpdate() {
-	    // The element may have moved.
-	    this._handleScroll();
-	  },
-
-	  componentWillUnmount: function componentWillUnmount() {
-	    if (this.scrollableParent) {
-	      // At the time of unmounting, the scrollable parent might no longer exist.
-	      // Guarding against this prevents the following error:
-	      //
-	      //   Cannot read property 'removeEventListener' of undefined
-	      this.scrollableParent.removeEventListener('scroll', this._handleScroll);
-	      window.removeEventListener('resize', this._handleScroll);
-	    }
-	  },
-
-	  /**
-	   * Traverses up the DOM to find a parent container which has an overflow style
-	   * that allows for scrolling.
-	   *
-	   * @return {Object} the closest parent element with an overflow style that
-	   *   allows for scrolling. If none is found, the `window` object is returned
-	   *   as a fallback.
-	   */
-	  _findScrollableParent: function _findScrollableParent() {
-	    var node = this.getDOMNode();
-
-	    while (node.parentNode) {
-	      node = node.parentNode;
-
-	      if (node === document) {
-	        // This particular node does not have a computed style.
-	        continue;
-	      }
-
-	      var _style = window.getComputedStyle(node);
-	      var overflowY = _style.getPropertyValue('overflow-y') || _style.getPropertyValue('overflow');
-
-	      if (overflowY === 'auto' || overflowY === 'scroll') {
-	        return node;
-	      }
-	    }
-
-	    // A scrollable parent element was not found, which means that we need to do
-	    // stuff on window.
-	    return window;
-	  },
-
-	  _handleScroll: function _handleScroll() {
-	    var isVisible = this._isVisible();
-
-	    if (this._wasVisible === isVisible) {
-	      // No change since last trigger
-	      return;
-	    }
-
-	    if (isVisible) {
-	      this.props.onEnter();
-	    } else {
-	      this.props.onLeave();
-	    }
-
-	    this._wasVisible = isVisible;
-	  },
-
-	  /**
-	   * @param {Object} node
-	   * @return {Number}
-	   */
-	  _distanceToTopOfScrollableParent: function _distanceToTopOfScrollableParent(node) {
-	    if (this.scrollableParent !== window && !node.offsetParent) {
-	      throw new Error('The scrollable parent of Waypoint needs to have positioning to ' + 'properly determine position of Waypoint (e.g. `position: relative;`)');
-	    }
-
-	    if (node.offsetParent === this.scrollableParent || !node.offsetParent) {
-	      return node.offsetTop;
-	    } else {
-	      return node.offsetTop + this._distanceToTopOfScrollableParent(node.offsetParent);
-	    }
-	  },
-
-	  /**
-	   * @return {boolean} true if scrolled down almost to the end of the scrollable
-	   *   parent element.
-	   */
-	  _isVisible: function _isVisible() {
-	    var waypointTop = this._distanceToTopOfScrollableParent(this.getDOMNode());
-	    var contextHeight = undefined,
-	        contextScrollTop = undefined;
-
-	    if (this.scrollableParent === window) {
-	      contextHeight = window.innerHeight;
-	      contextScrollTop = window.pageYOffset;
-	    } else {
-	      contextHeight = this.scrollableParent.offsetHeight;
-	      contextScrollTop = this.scrollableParent.scrollTop;
-	    }
-
-	    var thresholdPx = contextHeight * this.props.threshold;
-
-	    var isAboveBottom = contextScrollTop + contextHeight >= waypointTop - thresholdPx;
-	    var isBelowTop = contextScrollTop <= waypointTop + thresholdPx;
-
-	    return isAboveBottom && isBelowTop;
-	  },
-
-	  /**
-	   * @return {Object}
-	   */
-	  render: function render() {
-	    // We need an element that we can locate in the DOM to determine where it is
-	    // rendered relative to the top of its context.
-	    return React.createElement('span', { style: { fontSize: 0 } });
-	  }
-	});
-
-	module.exports = Waypoint;
-
-
-/***/ },
-/* 206 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict'
-	var React = __webpack_require__(1);
-	var SingleFileUpload = __webpack_require__(207)
-	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-
-	var New = React.createClass({displayName: "New",
-
-		render : function(){
-			return (
-				React.createElement("div", {className: "caption-container"}, 
-					React.createElement(SingleFileUpload, {ref: "fileUpload", remoteHandler: "/upload"}, 
-						React.createElement("img", {src: "./icons/upload.svg", width: "80%"}), 
-						React.createElement("br", null), 
-						"点这儿上传"
-					)
-				)
-			);
-		}
-	})
-
-	module.exports = New;
-
-/***/ },
-/* 207 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict'
-	var React = __webpack_require__(1);
-	var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-	var Circle = __webpack_require__(208).Circle;
-	var ImageCrop = __webpack_require__(211);
-
-	var ReactTransitionGroup = React.addons.TransitionGroup;
-
-	var CallBackTransitionGroup = React.createClass({displayName: "CallBackTransitionGroup",
-
-		componentDidLeave : function(){
-			if(this.props.leaveCallback){
-				this.props.leaveCallback();
-			}
-		},
-
-		componentDidEnter : function(){
-			if(this.props.enterCallback){
-				this.props.enterCallback();
-			}
-		},
-
-		componentDidAppear : function(){
-			if(this.props.appearCallback){
-				this.props.appearCallback();
-			}
-		},
-
-		render : function() {
-			return(React.createElement(ReactTransitionGroup, {transitionName: this.props.transitionName}, 
-				this.props.children
-			))
-		}
-	})
-
-	var UploadRing = React.createClass({displayName: "UploadRing",
-		componentDidMount: function () {
-		    this.refs.circle.getDOMNode().addEventListener("transitionend", this.props.done, false);
-
-		},
-
-		render : function() {
-			return (React.createElement("div", {style: {textAlign:"center", width: "200px", display: "block", margin:"100px auto"}}, 
-				React.createElement(Circle, {ref: "circle", 
-					percent: this.props.progress, 
-					strokeWidth: "10"}
-				)
-				)
-			)
-		}
-	})
-
-
-	// # React.js AJAX Single File upload input
-
-	// A React.js Component that demonstrates how to integrate
-	// with Ajax behavior. For single file uploading, you could
-	// get rid of importing jQuery. You can also write your own
-	// component that exhcange JSON information by mimicking this
-	// piece of code.
-
-	// The current implementation is a single file input, which
-	// is set to hidden and invoked from outside. And also you need
-	// to specify the callback which runs after uploaded.
-
-	// Marvin Yue Tao
-	// June 20, 2015
-
-	var SingleFileUPload = React.createClass({displayName: "SingleFileUPload",
-
-		// the default props contain the XHR object which handles 
-		// everything about transmission. 
-		xhr : new XMLHttpRequest(),
-
-		getInitialState: function () {
-			return {
-				file : {},
-				status : ""
-			};
-		},
-
-		invokeFileInput : function() {
-			this.refs.fileInput.getDOMNode().click();
-		},
-
-		loadImage : function(e) {
-			var self = this;
-			var reader = new FileReader();
-			var file = e.target.files[0];
-
-			reader.onload = function(upload) {
-				self.setState({
-					data: upload.target.result,
-					status : "loaded"
-				});
-			}
-
-			reader.readAsDataURL(file);
-		},
-
-		handleUpload : function(){
-			var payload = JSON.stringify({
-				dataSomething : this.refs.crop.getImage(),
-				caption : this.refs.caption.value
-			});
-
-			this.xhr.open("POST", this.props.remoteHandler);
-			this.xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-			this.xhr.send(payload);
-		},
-
-		uploadProgress : function(e){
-			this.setState({
-				progress : 	parseInt(e.loaded/e.total * 100),
-				status : "uploading"
-			})			
-		},
-
-		uploadDone : function(e){
-			window.location.href="/";
-		},
-
-		componentDidMount: function () {
-			this.xhr.upload.addEventListener("progress", this.uploadProgress, false);
-		},
-
-		componentDidUpdate: function (prevProps, prevState) {
-			if (this.state.progress==100 && this.refs.circle) {
-				console.log("yay");
-			}
-		},
-
-		render : function() {
-
-			var content;
-			if (this.state.status === "")
-
-				content = (
-					React.createElement("div", {	id: "file-upload", 
-							key: this.state.status, 
-							className: "file-upload", 
-							onClick: this.invokeFileInput}, 
-						this.props.children, 
-						React.createElement("input", {
-							ref: "fileInput", 
-							style: {display: "none"}, 
-
-							type: "file", 
-							accept: "image/*", 
-							capture: "camera", 
-							onChange: this.loadImage}
-						)
-					)
-
-				);
-
-			else if (this.state.status === "loaded" || this.state.status=== "uploading"){
-
-				var UploadingComponent;
-				if(this.state.status=== "loaded"){
-					UploadingComponent = (React.createElement("div", {key: this.state.status}, 
-						React.createElement(ImageCrop, {
-							ref: "crop", 
-							image: this.state.data, 
-							width: screen.width - 60, 
-							height: screen.width - 60}
-						), 
-						React.createElement("textarea", {ref: "caption", maxLength: "60", className: "caption", style: {width:window.innerWidth - 30}, placeholder: "Place your caption here"}), 
-						React.createElement("button", {ref: "confirmCrop", type: "button", onClick: this.handleUpload}, "Confirm!")
-					));
-				} else {
-					UploadingComponent = "";
-				}
-
-				var UploadingCircle;
-				if(this.state.status==="uploading"){
-					UploadingCircle=(React.createElement(UploadRing, {key: this.state.status, progress: this.state.progress, done: this.uploadDone}))
-				} else {
-					UploadingCircle="";
-				}
-
-				content = (React.createElement("div", null, 
-						React.createElement(ReactCSSTransitionGroup, {transitionName: "moveUp"}, 
-							UploadingComponent
-						), 
-						React.createElement(CallBackTransitionGroup, {transitionName: "moveDown", transitionEnter: false}, 
-							UploadingCircle
-						)
-					)
-					)
-
-			} 
-			return content;
-		}
-	})
-
-	module.exports = SingleFileUPload;
-
-/***/ },
-/* 208 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	module.exports = __webpack_require__(209);
-
-/***/ },
-/* 209 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-
-	var assign = __webpack_require__(210);
-	var React = __webpack_require__(177);
-	var defaultProps = {
-	  strokeWidth: 1,
-	  strokeColor: '#3FC7FA',
-	  trailWidth: 1,
-	  trailColor: '#D9D9D9'
-	};
-
-	var Line = React.createClass({
-	  displayName: 'Line',
-
-	  render: function render() {
-	    var props = assign({}, this.props);
-	    var pathStyle = {
-	      'strokeDasharray': '100px, 100px',
-	      'strokeDashoffset': '' + (100 - props.percent) + 'px',
-	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s linear'
-	    };
-
-	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
-	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
-	        props.trailWidth = props.strokeWidth;
-	        return;
-	      }
-	      if (item === 'strokeWidth' && props.strokeWidth && (!parseFloat(props.strokeWidth) || parseFloat(props.strokeWidth) > 100 || parseFloat(props.strokeWidth) < 0)) {
-	        props[item] = defaultProps[item];
-	        return;
-	      }
-	      if (!props[item]) {
-	        props[item] = defaultProps[item];
-	      }
-	    });
-
-	    var strokeWidth = props.strokeWidth;
-	    var center = strokeWidth / 2;
-	    var right = 100 - strokeWidth / 2;
-	    var pathString = 'M ' + center + ',' + center + ' L ' + right + ',' + center;
-	    var viewBoxString = '0 0 100 ' + strokeWidth;
-
-	    return React.createElement(
-	      'svg',
-	      { className: 'rc-progress-line', viewBox: viewBoxString, preserveAspectRatio: 'none' },
-	      React.createElement('path', { className: 'rc-progress-line-trail', d: pathString, strokeLinecap: 'round',
-	        stroke: props.trailColor, strokeWidth: props.trailWidth, fillOpacity: '0' }),
-	      React.createElement('path', { className: 'rc-progress-line-path', d: pathString, strokeLinecap: 'round',
-	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
-	    );
-	  }
-	});
-
-	var Circle = React.createClass({
-	  displayName: 'Circle',
-
-	  render: function render() {
-	    var props = assign({}, this.props);
-	    var strokeWidth = props.strokeWidth;
-	    var radius = 50 - strokeWidth / 2;
-	    var pathString = 'M 50,50 m 0,-' + radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,' + 2 * radius + '\n     a ' + radius + ',' + radius + ' 0 1 1 0,-' + 2 * radius;
-	    var len = Math.PI * 2 * radius;
-	    var pathStyle = {
-	      'strokeDasharray': '' + len + 'px ' + len + 'px',
-	      'strokeDashoffset': '' + (100 - props.percent) / 100 * len + 'px',
-	      'transition': 'stroke-dashoffset 0.6s ease 0s, stroke 0.6s ease'
-	    };
-	    ['strokeWidth', 'strokeColor', 'trailWidth', 'trailColor'].forEach(function (item) {
-	      if (item === 'trailWidth' && !props.trailWidth && props.strokeWidth) {
-	        props.trailWidth = props.strokeWidth;
-	        return;
-	      }
-	      if (!props[item]) {
-	        props[item] = defaultProps[item];
-	      }
-	    });
-
-	    return React.createElement(
-	      'svg',
-	      { className: 'rc-progress-circle', viewBox: '0 0 100 100' },
-	      React.createElement('path', { className: 'rc-progress-circle-trail', d: pathString, stroke: props.trailColor,
-	        strokeWidth: props.trailWidth, fillOpacity: '0' }),
-	      React.createElement('path', { className: 'rc-progress-circle-path', d: pathString, strokeLinecap: 'round',
-	        stroke: props.strokeColor, strokeWidth: props.strokeWidth, fillOpacity: '0', style: pathStyle })
-	    );
-	  }
-	});
-
-	module.exports = {
-	  Line: Line,
-	  Circle: Circle
-	};
-
-/***/ },
-/* 210 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */'use strict';
-	var propIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-	function ToObject(val) {
-		if (val == null) {
-			throw new TypeError('Object.assign cannot be called with null or undefined');
-		}
-
-		return Object(val);
-	}
-
-	function ownEnumerableKeys(obj) {
-		var keys = Object.getOwnPropertyNames(obj);
-
-		if (Object.getOwnPropertySymbols) {
-			keys = keys.concat(Object.getOwnPropertySymbols(obj));
-		}
-
-		return keys.filter(function (key) {
-			return propIsEnumerable.call(obj, key);
-		});
-	}
-
-	module.exports = Object.assign || function (target, source) {
-		var from;
-		var keys;
-		var to = ToObject(target);
-
-		for (var s = 1; s < arguments.length; s++) {
-			from = arguments[s];
-			keys = ownEnumerableKeys(Object(from));
-
-			for (var i = 0; i < keys.length; i++) {
-				to[keys[i]] = from[keys[i]];
-			}
-		}
-
-		return to;
-	};
-
-
-/***/ },
-/* 211 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/** @jsx React.DOM */"use strict"
-	var React = __webpack_require__(177);
-
-	var deviceEvents = {
-	    down: 'onTouchStart',
-	    move: 'onTouchMove',
-	    up: 'onTouchUp'
-	};
-
-	var ImageCrop = React.createClass({displayName: "ImageCrop",
-
-	    getDefaultProps: function() {
-	        return {
-	            border: 25,
-	            width: 200,
-	            height: 200,
-	            color: [0, 0, 0, 0.5],
-	            onImageReady:function() {},
-	        }
-	    },
-
-	    getInitialState: function() {
-	        return {
-	            drag: false,
-	            pinch: false,
-	            mouseY: null,
-	            mouseX: null,
-	            scale: 1,
-	            image: {
-	                x: 0,
-	                y: 0
-	            },
-	            canvas: {
-	                width: this.props.width + (this.props.border * 2),
-	                height: this.props.height + (this.props.border * 2)
-	            }
-	        };
-	    },
-
-	    getImage: function() {
-	        var newCanvas = document.createElement('canvas');
-	        var context = newCanvas.getContext('2d');
-
-	        newCanvas.width = this.props.width;
-	        newCanvas.height = this.props.height;
-
-	        this.setCanvasResolution(newCanvas);
-
-	        var imageState = this.state.image;
-
-	        this.paintImage(context, {
-	            resource: imageState.resource,
-	            x: imageState.x - this.props.border,
-	            y: imageState.y - this.props.border,
-	            width: imageState.width,
-	            height: imageState.height
-	        });
-
-	        return newCanvas.toDataURL("image/jpeg", 1);
-	    },
-
-	    isDataURL: function(str) {
-	        var regex = /^\s*data:([a-z]+\/[a-z]+(;[a-z\-]+\=[a-z\-]+)?)?(;base64)?,[a-z0-9\!\$\&\'\,\(\)\*\+\,\;\=\-\.\_\~\:\@\/\?\%\s]*\s*$/i;
-	        return !!str.match(regex);
-	    },
-
-	    loadImage: function(imageURL) {
-	        var imageObj = new Image();
-	        imageObj.onload = this.handleImageReady.bind(this, imageObj);
-	        if (!this.isDataURL(imageURL)) imageObj.crossOrigin = 'anonymous';
-	        imageObj.src = imageURL;
-	    },
-
-	    setCanvasResolution: function(canvas) {
-	        var context = canvas.getContext('2d');
-
-	        var devicePixelRatio = window.devicePixelRatio || 1;
-
-	        if (true) {
-
-	            var oldWidth = canvas.width;
-	            var oldHeight = canvas.height;
-
-	            canvas.width = oldWidth * devicePixelRatio;
-	            canvas.height = oldHeight * devicePixelRatio;
-
-	            canvas.style.width = oldWidth + 'px';
-	            canvas.style.height = oldHeight + 'px';
-
-	            context.scale(devicePixelRatio, devicePixelRatio);
-	        }
-
-	    },
-
-	    componentDidMount: function() {
-	        var canvas = this.getDOMNode();
-	        var context = canvas.getContext('2d');
-	        this.setCanvasResolution(canvas);
-
-	        if (this.props.image) {
-	            this.loadImage(this.props.image);
-	        }
-	        this.paint(context);
-	        React.initializeTouchEvents(true);
-	    },
-
-	    componentWillUnmount: function() {
-	    },
-
-	    componentDidUpdate: function() {
-	        var context = this.getDOMNode().getContext('2d');
-	        context.clearRect(0, 0, this.state.canvas.width, this.state.canvas.height);
-	        this.paintImage(context, this.state.image);
-	        this.paint(context);
-	    },
-
-	    handleImageReady: function(image) {
-	        var imageState = this.getInitialSize(image.width, image.height);
-	        imageState.resource = image;
-	        imageState.x = this.props.border;
-	        imageState.y = this.props.border;
-	        this.setState({drag: false, pinch: false, image: imageState}, this.props.onImageReady);
-	    },
-
-	    getInitialSize: function(width, height) {
-	        var newHeight, newWidth, dimensions, canvasRatio, imageRatio;
-
-	        canvasRatio = this.props.height / this.props.width;
-	        imageRatio = height / width;
-
-	        if (canvasRatio > imageRatio) {
-	            newHeight = (this.props.height);
-	            newWidth = (width * (newHeight / height));
-	        } else {
-	            newWidth = (this.props.width);
-	            newHeight = (height * (newWidth / width));
-	        }
-
-	        return {
-	            height: newHeight,
-	            width: newWidth
-	        };
-	    },
-
-	    componentWillReceiveProps: function(newProps) {
-	        if (this.props.image != newProps.image) {
-	            this.loadImage(newProps.image);
-	        }
-	        if (this.state.scale != newProps.scale) {
-	            this.squeeze(newProps);
-	        }
-	    },
-
-	    paintImage: function(context, image) {
-	        if (image.resource) {
-	            context.save();
-	            context.globalCompositeOperation = 'destination-over';
-	            context.drawImage(image.resource, image.x, image.y,
-	                image.width * this.state.scale, image.height * this.state.scale);
-
-	            context.restore();
-	        }
-	    },
-
-	    paint: function(context) {
-	        context.save();
-	        context.translate(0, 0);
-	        context.fillStyle = "rgba(0,0,0,0.5)";
-
-	        var borderSize = this.props.border;
-	        var height = this.state.canvas.height;
-	        var width = this.state.canvas.width;
-
-	        context.fillRect(0, 0, width, borderSize); // top
-	        context.fillRect(0, height - borderSize, width, borderSize); // bottom
-	        context.fillRect(0, borderSize, borderSize, height - (borderSize * 2)); // left
-	        context.fillRect(width - borderSize, borderSize, borderSize, height - (borderSize * 2)); // right
-
-	        context.restore();
-	    },
-
-	    handleCursorDown: function(e) {
-	        e.preventDefault();
-	         
-	        if (event.targetTouches.length === 1)
-	            this.setState({
-	                drag: true,
-	                pinch : false,
-	                mouseX: null,
-	                mouseY: null
-	            });
-	        else if (event.targetTouches.length === 2){
-	            this.lastZoomScale = undefined;
-	            this.setState({
-	                drag: false,
-	                pinch : true,
-	                mouseX: null,
-	                mouseY: null
-	            })            
-	        }
-	    },
-
-	    handleCursorUp: function() {
-
-	        if (this.state.drag) {
-	            this.setState({drag: false});
-	        }
-	        if (this.state.pinch) {
-	            this.setState({pinch: false});
-	        }
-	    },
-
-	    handleCursorMove: function(e) {
-	        if (this.state.drag) {
-	            this.handleDrag();
-	        } if (this.state.pinch) {
-	            this.handleZoom(this.handlePinch());
-	        }
-	    },
-
-	    handlePinch: function(){
-	        
-	        var zoom = false;
-
-	        var p1 = event.targetTouches[0];
-	        var p2 = event.targetTouches[1];
-	        if(p1 && p2){
-	            var zoomScale = Math.sqrt(Math.pow(p2.pageX - p1.pageX, 2) + Math.pow(p2.pageY - p1.pageY, 2)); //euclidian distance
-
-	            if( this.lastZoomScale ) {
-	                zoom = {
-	                    scale : zoomScale - this.lastZoomScale,
-	                    center : {x: (p1.pageX + p2.pageX)/2, y : (p1.pageY + p2.pageY)/2}
-	                };
-	            }
-
-	            this.lastZoomScale = zoomScale;            
-	        }
-
-	        return zoom;
-	    },
-
-	    handleZoom: function(zoom){
-	        if (!zoom) {
-	            return;
-	        }
-
-	        var newScale = Math.max(1, this.state.scale + zoom.scale/100);
-	        
-	        var canvasmiddleX = this.state.canvas.width / 2;
-	        var canvasmiddleY = this.state.canvas.height / 2;
-
-	        var ratio = (newScale / this.state.scale - 1);
-	        var newPosX = this.state.image.x + ratio * (this.state.image.x - canvasmiddleX);
-	        var newPosY = this.state.image.y + ratio *(this.state.image.y - canvasmiddleY);
-
-	        
-	        this.setState({
-	            scale : newScale,
-	            image: {
-	                resource : this.state.image.resource,
-	                x: Math.min(newPosX, this.props.border),
-	                y: Math.min(newPosY, this.props.border),
-	                width: this.state.image.width,
-	                height: this.state.image.height
-	            }
-	        })
-	    },
-
-	    handleDrag: function(){
-	        var imageState = this.state.image;
-	        var lastX = imageState.x;
-	        var lastY = imageState.y;
-
-	        var mousePositionX = event.targetTouches[0].pageX;
-	        var mousePositionY = event.targetTouches[0].pageY;
-
-	        var newState = { mouseX: mousePositionX, mouseY: mousePositionY, image: imageState };
-
-	        if (this.state.mouseX && this.state.mouseY) {
-	            var xDiff = this.state.mouseX - mousePositionX;
-	            var yDiff = this.state.mouseY - mousePositionY;
-
-	            imageState.y = this.getBound(lastY - yDiff, "height", this.state.image);
-	            imageState.x = this.getBound(lastX - xDiff, "width", this.state.image);
-	        }
-
-	        this.setState(newState);
-	    },
-
-	    squeeze: function(props) {
-	        var imageState = this.state.image;
-	            imageState.y = this.getBound(imageState.y, "height", this.state.image);
-	            imageState.x = this.getBound(imageState.x, "width", this.state.image);
-	        this.setState({ image: imageState });
-	    },
-
-	    getBound: function(axis, dim, img){
-
-	        var diff = Math.ceil((img[dim] * this.state.scale - img[dim])/2) + this.props.border;
-	        var bound = Math.ceil(-img[dim] * this.state.scale + this.props.width + this.props.border);
-
-	        return Math.min(Math.min(Math.max(axis, bound), this.props.border), diff);
-	    },
-
-	    render: function() {
-	        var attributes = {
-	            width: this.props.width + (this.props.border * 2),
-	            height: this.props.height + (this.props.border * 2)
-	        };
-
-	        attributes[deviceEvents.down] = this.handleCursorDown;
-	        attributes[deviceEvents.move] = this.handleCursorMove;
-	        attributes[deviceEvents.up] = this.handleCursorUp;
-
-	        return React.createElement("canvas", React.__spread({},  attributes));
-	    }
-
-	});
-
-	module.exports = ImageCrop;
 
 /***/ }
 /******/ ]);
