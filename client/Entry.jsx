@@ -90,14 +90,14 @@ var Entry = React.createClass({
 		});	
 	},
 
-
-
 	render: function() {
 
 		return (
 			<div>
 				<ScreenWayPoint enterThres={0.5} leaveThres={0.1} onEnter={this.displayButton} onLeave={this.hideButton} />
-				<div key={"desc"+this.props.key} style={{opacity:this.state.opacity}} className="descript-box"><img width="100%" src="./icons/weixin.svg" /></div>
+				<div key={"desc"+this.props.key} style={{opacity:this.state.opacity}} className="descript-box" onclick={this.handleClick}>
+					<img width="100%" src="./icons/weixin.svg"/>
+				</div>
 
 
 				<img ref={"image"+this.props.key} className="user-image" src={this.props.imageData}/>
