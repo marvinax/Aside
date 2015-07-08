@@ -1,6 +1,11 @@
 'use strict'
-var React = require('react/addons');
-var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
+var React = require('react');
+var Wechat = require('./wechat.js');
+var Https = require('https');
+
+var getSignature = function(){
+
+}
 
 var ScreenWayPoint = React.createClass({
 	getDefaultProps: function() {
@@ -95,7 +100,7 @@ var Entry = React.createClass({
 		return (
 			<div>
 				<ScreenWayPoint enterThres={0.5} leaveThres={0.1} onEnter={this.displayButton} onLeave={this.hideButton} />
-				<div key={"desc"+this.props.key} style={{opacity:this.state.opacity}} className="descript-box" onclick={this.handleClick}>
+				<div key={"desc"+this.props.key} style={{opacity:this.state.opacity}} className="descript-box" onClick={this.handleClick}>
 					<img width="100%" src="./icons/weixin.svg"/>
 				</div>
 

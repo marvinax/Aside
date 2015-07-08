@@ -22,7 +22,8 @@
     "rc-progress": "^1.0.3",
     "react-router-component": "^0.25.1",
     "react-waypoint": "^1.0.1",
-    "swig": "^1.4.2"
+    "swig": "^1.4.2",
+    "wechat": "^2.0.1"
   },
   "devDependencies": {
     "jsx-loader": "^0.13.2",
