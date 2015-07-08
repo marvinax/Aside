@@ -57,30 +57,12 @@ canvas, img {
 	color: #fff;
 
 	font-family:Helvetica, sans-serif;
-	font-size : 200%;
 	
-	margin-right : 88px;
-	padding: 30px 10px;
+	margin-left : 200px;
+  padding: 10px 10px;
 	position: absolute;
 	opacity : 0.6;
-}
-
-.descript-enter {
-	opacity: 0.1;
-	transition: opacity .5s ease;
-}
-
-.descript-enter.descript-enter-active {
-	opacity : 0.6;
-}
-
-.descript-leave {
-	opacity: 0.6;
-	transition: opacity .5s ease;
-}
-
-.descript-leave.descript-leave-active {
-	opacity : 0.1;
+  transition: opacity .5s ease;
 }
 
 .moveUp-enter {

@@ -92,7 +92,7 @@ var EntryList = React.createClass({
 	render: function() {
 
 		return (
-			<div className="Page MainPage" ref="entryHolder">
+			<div className="Page MainPage">
 				{this._renderItems()}
 				{this._renderWaypoint()}
 

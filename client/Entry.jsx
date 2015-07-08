@@ -1,8 +1,6 @@
 'use strict'
 var React = require('react/addons');
-// var Waypoint = require('react-waypoint');
 var ReactCSSTransitionGroup = React.addons.CSSTransitionGroup;
-var $ = require('jquery');
 
 var ScreenWayPoint = React.createClass({
 	getDefaultProps: function() {
@@ -15,7 +13,7 @@ var ScreenWayPoint = React.createClass({
 	},
 
 	componentDidMount: function() {
-		window.addEventListener('touchmove', this.handleScroll);
+		window.addEventListener('touchstart', this.handleScroll);
 		window.addEventListener('scroll', this.handleScroll);
 		this.handleScroll();
 	},
@@ -25,12 +23,12 @@ var ScreenWayPoint = React.createClass({
 	},
 
 	componentWillUnmount: function() {
-		window.removeEventListener('touchmove', this.handleScroll);
+		window.removeEventListener('touchstart', this.handleScroll);
 		window.removeEventListener('scroll', this.handleScroll);
 	},
 
 	handleScroll: function(event) {
-		const isVisible = this.isVisible();
+		var isVisible = this.isVisible();
 
 		if (this.wasVisible === isVisible) {
 		  return;
@@ -46,13 +44,13 @@ var ScreenWayPoint = React.createClass({
 	},
 
 	isVisible: function() {
-		const node = this.getDOMNode();
+		var node = this.getDOMNode();
 
-		const enterThresPx = screen.height * this.props.enterThres;
-		const leaveThresPx = screen.height * this.props.leaveThres;
+		var enterThresPx = screen.height * this.props.enterThres;
+		var leaveThresPx = screen.height * this.props.leaveThres;
 
-		const isAboveBottom = node.offsetTop - window.scrollY <= enterThresPx;
-		const isBelowTop    = node.offsetTop - window.scrollY > leaveThresPx;
+		var isAboveBottom = node.offsetTop - window.scrollY <= enterThresPx;
+		var isBelowTop    = node.offsetTop - window.scrollY > leaveThresPx;
 
 		return isAboveBottom && isBelowTop;
 	},
@@ -64,40 +62,45 @@ var ScreenWayPoint = React.createClass({
 
 
 var Entry = React.createClass({
+	componentDidMount: function () {
+	      
+	},
+
 	getInitialState: function () {
 	    return {
-	        liked : false
+	        opacity : 0
 	    };
 	},
 
-	componentWillUpdate: function (nextProps, nextState) {
-		var node = this.getDOMNode();
-	},
 
 	displayButton: function () {
-		this.setState({liked:true});
+		this.setState({opacity:0.6});
 	},
 
 	hideButton : function() {
-		this.setState({liked:false});
+		this.setState({opacity:0});
 	},
 
 	handleClick: function() {
+		WeixinJSBridge.invoke('shareTimeline',{
+			"img_url": this.props.imageData,
+			"link": "http://everstream.cn/",
+			"desc": "无聊图集",
+			"title":"包你无聊"
+		});	
 	},
 
-	render: function() {
 
-		var descBox = (this.state.liked) ? (<div key={"desc"+this.props.key} className="descript-box"> Liked! </div>) : "";
+
+	render: function() {
 
 		return (
 			<div>
 				<ScreenWayPoint enterThres={0.5} leaveThres={0.1} onEnter={this.displayButton} onLeave={this.hideButton} />
-				<ReactCSSTransitionGroup transitionName="descript">
-					{descBox}
-				</ReactCSSTransitionGroup>
+				<div key={"desc"+this.props.key} style={{opacity:this.state.opacity}} className="descript-box"><img width="100%" src="./icons/weixin.svg" /></div>
 
 
-				<img className="user-image" src={this.props.imageData}/>
+				<img ref={"image"+this.props.key} className="user-image" src={this.props.imageData}/>
 			</div>
 		);
 	}
