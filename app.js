@@ -13,6 +13,8 @@ var fs = require('fs');
 var app = module.exports = koa();
 var loki = require('lokijs');
 var uuid = require('node-uuid');
+var https = require('https');
+
 
 app.use(logger());
 app.use(compress());
@@ -33,10 +35,8 @@ var db = new loki('./data.json', {
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 
-app.use(route.get('/wechat-token/', function *(){
-	https.get('https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=wxf0db58e603fe17da&secret=c310111e9737e09a71588b176d92ff89', function(response) {
-		this.body = response;
-	})
+app.use(route.get('/wechat/', function *(){
+	this.body = this.request.query.echostr;
 }));
 
 app.use(route.get('/stats', function *(){
