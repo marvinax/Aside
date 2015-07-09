@@ -15,6 +15,32 @@ var loki = require('lokijs');
 var uuid = require('node-uuid');
 var https = require('https');
 
+var wechat_signature;
+
+var getSignature = (function(){
+	var ticket;
+
+	var appid = "wxf0db58e603fe17da";
+	var secret = "c310111e9737e09a71588b176d92ff89";
+
+	var token_base = "http://https://api.weixin.qq.com/cgi-bin/token?";
+	var token_query = "grant_type=client_credential&appid="+appid+"&secret="+secret;
+
+	var ticket_base = "http://https://api.weixin.qq.com/cgi-bin/ticket/getticket?";
+
+	https.get(token_base+token_query, function(token_response){
+		if(token_response.errcode){
+			throw token_response.errcode+": "+token_response.errmsg;
+		}
+
+		var ticket_query = "access_token="+token_response.access_token+"type=jsapi";
+
+		https.get(ticket_base+ticket_query, function(ticket_response){
+			console.log(ticket_response);
+		})
+
+	})
+})();
 
 app.use(logger());
 app.use(compress());
