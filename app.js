@@ -14,8 +14,6 @@ var app = module.exports = koa();
 var loki = require('lokijs');
 var uuid = require('node-uuid');
 
-var request = require('koa-request');
-
 var sign = require('wx_jsapi_sign');
 var config = require('./config.js');
 
