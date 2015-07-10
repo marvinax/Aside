@@ -36,14 +36,14 @@ var db = new loki('./data.json', {
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 
-app.use(route.get('/wechat/', function *(){
+app.use(route.post('/wechat/', function *(){
     var url = this.request.body.url;
     console.log(url);
 
     sign.getSignature(config)(url, function(err, result){
         if(err){
             this.body = JSON.stringify({error: err});
-        else {
+        } else {
             console.log(result);
             this.body = JSON.stringify(result);
         }
