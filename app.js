@@ -37,8 +37,8 @@ var db = new loki('./data.json', {
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 
 app.use(route.post('/wechat/', function *(){
-    var url = this.request.body.url;
-    console.log(url);
+    var res = yield parse.json(this);
+    console.log(res);
 
     sign.getSignature(config)(url, function(err, result){
         if(err){
