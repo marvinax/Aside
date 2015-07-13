@@ -51,7 +51,7 @@ app.use(function *(err, result){
 	} else {
 		this.body = JSON.stringify(result);
 	}
-})
+});
 
 app.use(route.get('/stats', function *(){
 	var res = docs.find({});
