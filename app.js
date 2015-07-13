@@ -36,20 +36,22 @@ var db = new loki('./data.json', {
 
 var render = views(path.join(__dirname, 'views'), {map:{html:'swig'}});
 
-app.use(route.post('/wechat/', function *(){
+app.use(route.post('/wechat/', function *(next){
     var res = yield parse.json(this);
     console.log(res);
 
     sign.getSignature(config)(url, function(err, result){
-        if(err){
-            this.body = JSON.stringify({error: err});
-        } else {
-            console.log(result);
-            this.body = JSON.stringify({asd:"asd"});
-        }
+    	yield next(err, result);
     })
-
 }));
+
+app.use(function *(err, result){
+	if (err) {
+		this.body = JSON.stringify(err);
+	} else {
+		this.body = JSON.stringify(result);
+	}
+})
 
 app.use(route.get('/stats', function *(){
 	var res = docs.find({});
