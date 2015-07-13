@@ -45,7 +45,7 @@ app.use(route.post('/wechat/', function *(){
             this.body = JSON.stringify({error: err});
         } else {
             console.log(result);
-            this.body = JSON.stringify(result);
+            this.body = JSON.stringify({asd:"asd"});
         }
     })
 
