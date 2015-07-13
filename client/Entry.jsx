@@ -1,6 +1,6 @@
 'use strict'
 var React = require('react');
-var Wechat = require('./wechat.js');
+// var Wechat = require('./wechat.js');
 var Https = require('https');
 
 var getSignature = function(){
